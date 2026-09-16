@@ -6,8 +6,10 @@ const adminAuth = async (req, res, next) => {
         if (!token){
             return res.json({success : false, message: "Not Authorized Login Again"})
         }
-        const token_decode = jwt.verify(token, process.env.JWT_SECRET);
-        if(token_decode !== process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD) {
+        const secret = process.env.JWT_SECRET || 'zafran_jwt_secret_key';
+        const token_decode = jwt.verify(token, secret);
+        const expected = (process.env.ADMIN_EMAIL || 'admin@zafran.com') + (process.env.ADMIN_PASSWORD || 'admin1234');
+        if(token_decode !== expected) {
             return res.json({success : false, message: "Not Authorized Login Again"})
         }
         next()

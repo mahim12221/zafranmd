@@ -2,20 +2,18 @@ import { createContext, useEffect, useState } from "react";
 import axios from 'axios';
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
-
-
+import { products as localProducts } from '../assets/assets';
 
 export const ShopContext = createContext(); 
 
 const ShopContextProvider = (props) => { 
     const currency = '$'; 
     const delivery_fee = 10; 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
-    console.log(backendUrl)
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
-    const [cartItems, setCartItems] = useState([]);
-    const [products, setProducts] = useState([])
+    const [cartItems, setCartItems] = useState({});
+    const [products, setProducts] = useState(localProducts || []);
     const [token, setToken] = useState('')
     const navigate = useNavigate();
 
@@ -40,9 +38,6 @@ const ShopContextProvider = (props) => {
         setCartItems(cartData);
         if(token){
             try{
-                console.log(token)
-                console.log(itemId)
-                console.log(size)
                 await axios.post(backendUrl + '/api/cart/add', {itemId, size}, {headers:{token}})
             }
             catch(error){
@@ -75,7 +70,7 @@ const ShopContextProvider = (props) => {
         setCartItems(cartData);
         if(token){
             try{
-                await axios.post(backendUrl + 'api/cart/update', {itemId, size, quantity}, {headers: {token}})
+                await axios.post(backendUrl + '/api/cart/update', {itemId, size, quantity}, {headers: {token}})
             }
             catch(error){
                 console.log(error);
@@ -87,6 +82,7 @@ const ShopContextProvider = (props) => {
         let totalAmount = 0;
         for(const items in cartItems){
             let itemInfo = products.find((product)=> product._id === items);
+            if (!itemInfo) continue;
             for(const item in cartItems[items]){
                 try{
                     if(cartItems[items][item] > 0){
@@ -104,29 +100,24 @@ const ShopContextProvider = (props) => {
     const getProductsData = async () => {
         try {
             const response = await axios.get(backendUrl + '/api/product/list')
-            if(response.data.success){
+            if(response.data.success && response.data.products && response.data.products.length > 0){
                 setProducts(response.data.products);
-            }
-            else{
-                toast.error(response.data.message)
             }
         }
         catch (error){
-            console.log(error)
-            toast.error(error.message)
+            console.log('Using local products catalog:', error.message)
         }
     }
 
     const getUserCart = async (token) => {
         try{
             const response = await axios.post(backendUrl + '/api/cart/get', {}, {headers: {token}})
-            if(response.data.success){
+            if(response.data.success && response.data.cartData){
                 setCartItems(response.data.cartData);
             }
         }
         catch (error){
             console.log(error)
-            toast.error(error.message)
         }
     }
     useEffect(()=>{

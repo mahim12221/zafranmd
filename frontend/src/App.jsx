@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import PlaceOrder from './pages/PlaceOrder';
 import Orders from './pages/Orders';
 import Collection from './pages/Collection'; 
+import AdminPortal from './pages/AdminPortal';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import SearchBar from './components/SearchBar';
@@ -32,6 +33,8 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/place-order" element={<PlaceOrder />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/admin/*" element={<AdminPortal />} />
+        <Route path="/admin" element={<AdminPortal />} />
       </Routes>
       <Footer/>
     </div>

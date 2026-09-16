@@ -55,8 +55,8 @@ const PlaceOrder = () => {
       };
 
       switch (method) {
-        case 'cod':
-          const response = await axios.post(`${backendUrl}/api/order/place`, orderData, { headers: { token } });
+        case 'cod': {
+          const response = await axios.post(`${backendUrl || ''}/api/order/place`, orderData, { headers: { token } });
           if (response.data.success) {
             setCartItems({});
             navigate('/orders');
@@ -64,6 +64,7 @@ const PlaceOrder = () => {
             toast.error(response.data.message);
           }
           break;
+        }
         default:
           break;
       }

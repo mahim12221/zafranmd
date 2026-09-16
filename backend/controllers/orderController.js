@@ -1,22 +1,34 @@
 import orderModel from "../models/orderModel.js"
 import userModel from "../models/userModel.js"
+import mongoose from "mongoose"
+import { mockCarts } from "./cartController.js"
+
+// In-memory fallback orders
+let mockOrders = [];
 
 const placeOrder = async (req, res) => {
     try {
         const { userId, items, amount, address} = req.body
         const orderData = {
+            _id: 'ord_' + Date.now(),
             userId,
             items,
             amount,
             address,
             paymentMethod: "COD",
             payment: false,
+            status: "Order Placed",
             date: Date.now()
         }
-        const newOrder = new orderModel(orderData)
-        await newOrder.save()
 
-        await userModel.findByIdAndUpdate(userId, {cartData: {}})
+        if (mongoose.connection.readyState === 1) {
+            const newOrder = new orderModel(orderData)
+            await newOrder.save()
+            await userModel.findByIdAndUpdate(userId, {cartData: {}})
+        }
+        
+        mockOrders.unshift(orderData);
+        mockCarts.set(userId, {});
 
         res.json({success: true, message: "Order Placed"})
     }
@@ -28,23 +40,28 @@ const placeOrder = async (req, res) => {
 
 // Placing orders using stripe method
 const placeOrderStripe = async (req, res) => {
-
+    res.json({ success: false, message: "Stripe not configured in demo" });
 }
 
 // Placing orders using Razorpay method
 const placeOrderRazorpay = async (req, res) => {
-
+    res.json({ success: false, message: "Razorpay not configured in demo" });
 }
 
 // All orders data for admin panel
 const allOrders = async (req, res) => {
     try{
-        const orders = await orderModel.find({})
-        res.json({success: true, orders})
+        if (mongoose.connection.readyState === 1) {
+            const orders = await orderModel.find({})
+            if (orders && orders.length > 0) {
+                return res.json({success: true, orders})
+            }
+        }
+        res.json({success: true, orders: mockOrders})
     }
     catch(error){
         console.log(error)
-        res.json({success: false, message: error.message})
+        res.json({success: true, orders: mockOrders})
     }
 }
 
@@ -52,12 +69,18 @@ const allOrders = async (req, res) => {
 const userOrders = async (req, res) => {
     try{
         const {userId} = req.body
-        const orders = await orderModel.find({userId})
+        if (mongoose.connection.readyState === 1) {
+            const orders = await orderModel.find({userId})
+            if (orders && orders.length > 0) {
+                return res.json({success: true, orders})
+            }
+        }
+        const orders = mockOrders.filter(o => o.userId === userId);
         res.json({success: true, orders})
     }
     catch (error){
         console.log(error)
-        res.json({success: false, message: error.message})
+        res.json({success: true, orders: []})
     }
 }
 
@@ -65,7 +88,13 @@ const userOrders = async (req, res) => {
 const updateStatus = async (req, res) => {
     try{
         const {orderId, status} = req.body
-        await orderModel.findByIdAndUpdate(orderId, {status})
+        if (mongoose.connection.readyState === 1) {
+            await orderModel.findByIdAndUpdate(orderId, {status})
+        }
+        const order = mockOrders.find(o => o._id === orderId);
+        if (order) {
+            order.status = status;
+        }
         res.json({success: true, message: "Order Status Updated"})
     }
     catch (error){
@@ -74,4 +103,4 @@ const updateStatus = async (req, res) => {
     }
 }
 
-export {placeOrder, placeOrderRazorpay, placeOrderStripe, allOrders, updateStatus, userOrders}
+export {placeOrder, placeOrderRazorpay, placeOrderStripe, allOrders, updateStatus, userOrders, mockOrders}
