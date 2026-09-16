@@ -47,21 +47,24 @@ const NavBar = () => {
 
       {/* Profile and Cart */}
       <div className="flex items-center gap-4 sm:gap-6">
-        <Link
-          to="/admin"
-          className="text-xs px-2.5 py-1 border border-gray-800 rounded font-semibold text-gray-800 hover:bg-black hover:text-white transition"
-        >
-          Admin
-        </Link>
-        <img onClick={() => setShowSearch(true)} src={assets.search_icon} className="w-5 cursor-pointer" alt="Search" />
+        <img 
+          onClick={() => {
+            setShowSearch(true);
+            if (!location.pathname.includes('collection')) {
+              navigate('/collection');
+            }
+          }} 
+          src={assets.search_icon} 
+          className="w-5 cursor-pointer hover:opacity-75 transition" 
+          alt="Search" 
+        />
 
         <div className="group relative">
-          <img onClick={() => token ? null : navigate('/login')} className="w-5 cursor-pointer" src={assets.profile_icon} alt="Profile" />
+          <img onClick={() => token ? navigate('/profile') : navigate('/login')} className="w-5 cursor-pointer" src={assets.profile_icon} alt="Profile" />
           {token && <div className="hidden group-hover:block absolute right-0 pt-4 bg-white shadow-md rounded z-20">
             <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded">
-              <p className="cursor-pointer hover:text-black">My Profile</p>
+              <p onClick={() => navigate('/profile')} className="cursor-pointer hover:text-black">My Profile</p>
               <p onClick={()=> navigate('/orders')} className="cursor-pointer hover:text-black">Orders</p>
-              <p onClick={()=> navigate('/admin')} className="cursor-pointer hover:text-black font-medium text-black">Admin Panel</p>
               <p onClick={logout} className="cursor-pointer hover:text-black">Logout</p>
             </div>
           </div>}

@@ -3,49 +3,69 @@ import axios from 'axios';
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 import { products as localProducts } from '../assets/assets';
+import { resolveBackendUrl } from '../utils/backendUrl';
 
 export const ShopContext = createContext(); 
 
 const ShopContextProvider = (props) => { 
-    const currency = '$'; 
-    const delivery_fee = 10; 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+    const currency = '৳'; 
+    const backendUrl = resolveBackendUrl();
+    const [deliveryFee, setDeliveryFee] = useState(() => {
+        const saved = localStorage.getItem('zafran_delivery_fee');
+        return saved ? Number(saved) : 60;
+    });
+    const [deliveryFeeDhaka, setDeliveryFeeDhaka] = useState(60);
+    const [deliveryFeeOutside, setDeliveryFeeOutside] = useState(120);
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [cartItems, setCartItems] = useState({});
     const [products, setProducts] = useState(localProducts || []);
-    const [token, setToken] = useState('')
+    const [token, setToken] = useState('');
     const navigate = useNavigate();
 
-    const addToCart = async (itemId, size) => {
-        if(!size){
-            toast.error('Select Product Size');
-            return;
+    const fetchDeliverySettings = async () => {
+        try {
+            const response = await axios.get(`${backendUrl || ''}/api/order/settings`);
+            if (response.data.success && response.data.settings) {
+                const { deliveryFee, deliveryFeeDhaka, deliveryFeeOutside } = response.data.settings;
+                if (deliveryFee !== undefined) {
+                    setDeliveryFee(deliveryFee);
+                    localStorage.setItem('zafran_delivery_fee', String(deliveryFee));
+                }
+                if (deliveryFeeDhaka !== undefined) setDeliveryFeeDhaka(deliveryFeeDhaka);
+                if (deliveryFeeOutside !== undefined) setDeliveryFeeOutside(deliveryFeeOutside);
+            }
+        } catch (err) {
+            console.log('Using local delivery settings');
         }
+    };
+
+    const addToCart = async (itemId, size = 'Standard', color = '') => {
+        const variantKey = color ? (size && size !== 'Standard' ? `${size} • ${color}` : color) : (size || 'Standard');
         let cartData = structuredClone(cartItems);
         if(cartData[itemId]){
-            if(cartData[itemId][size]){
-                cartData[itemId][size] += 1;
+            if(cartData[itemId][variantKey]){
+                cartData[itemId][variantKey] += 1;
             }
             else{
-                cartData[itemId][size] = 1;
+                cartData[itemId][variantKey] = 1;
             }
         }
         else{
             cartData[itemId] = {};
-            cartData[itemId][size] = 1;
+            cartData[itemId][variantKey] = 1;
         }
         setCartItems(cartData);
+        toast.success('Added to Cart!');
         if(token){
             try{
-                await axios.post(backendUrl + '/api/cart/add', {itemId, size}, {headers:{token}})
+                await axios.post(`${backendUrl || ''}/api/cart/add`, {itemId, size: variantKey}, {headers:{token}})
             }
             catch(error){
                 console.log(error);
-                toast.error(error.message)
+                toast.error(error.response?.data?.message || error.message)
             }
         }
-        
     }
        
     const getCartCount = () => {
@@ -70,11 +90,11 @@ const ShopContextProvider = (props) => {
         setCartItems(cartData);
         if(token){
             try{
-                await axios.post(backendUrl + '/api/cart/update', {itemId, size, quantity}, {headers: {token}})
+                await axios.post(`${backendUrl || ''}/api/cart/update`, {itemId, size, quantity}, {headers: {token}})
             }
             catch(error){
                 console.log(error);
-                toast.error(error.message)
+                toast.error(error.response?.data?.message || error.message)
             }
         }
     }
@@ -99,9 +119,22 @@ const ShopContextProvider = (props) => {
 
     const getProductsData = async () => {
         try {
-            const response = await axios.get(backendUrl + '/api/product/list')
+            const response = await axios.get(`${backendUrl || ''}/api/product/list`)
             if(response.data.success && response.data.products && response.data.products.length > 0){
-                setProducts(response.data.products);
+                const normalized = response.data.products.map(p => {
+                    const rawImgs = Array.isArray(p.images) && p.images.length > 0 
+                        ? p.images 
+                        : (Array.isArray(p.image) && p.image.length > 0 
+                            ? p.image 
+                            : [p.image || p.images || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80"]);
+                    return {
+                        ...p,
+                        image: rawImgs,
+                        images: rawImgs,
+                        colors: Array.isArray(p.colors) ? p.colors : []
+                    };
+                });
+                setProducts(normalized);
             }
         }
         catch (error){
@@ -111,7 +144,7 @@ const ShopContextProvider = (props) => {
 
     const getUserCart = async (token) => {
         try{
-            const response = await axios.post(backendUrl + '/api/cart/get', {}, {headers: {token}})
+            const response = await axios.post(`${backendUrl || ''}/api/cart/get`, {}, {headers: {token}})
             if(response.data.success && response.data.cartData){
                 setCartItems(response.data.cartData);
             }
@@ -121,8 +154,9 @@ const ShopContextProvider = (props) => {
         }
     }
     useEffect(()=>{
-        getProductsData()
-    }, [token])
+        getProductsData();
+        fetchDeliverySettings();
+    }, [token]);
 
     useEffect(()=>{
         if(!token && localStorage.getItem('token')){
@@ -132,7 +166,8 @@ const ShopContextProvider = (props) => {
     }, [token])
 
     const value = { 
-        products, currency, delivery_fee,
+        products, currency, delivery_fee: deliveryFee,
+        deliveryFee, setDeliveryFee, deliveryFeeDhaka, deliveryFeeOutside, fetchDeliverySettings,
         search, setSearch, showSearch, setShowSearch,
         cartItems, setCartItems, addToCart, 
         getCartCount, updateQuantity, getCartAmount,

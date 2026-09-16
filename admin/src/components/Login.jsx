@@ -24,9 +24,9 @@ const Login = ({setToken}) => {
     }
   return (
     <div className='min-h-screen flex items-center justify-center w-full'>
-      <div className='bg-white shadow-md rounded-lg px-8 py-6 max-w-md'>
-        <h1 className='text-2xl font-bold mb-2'>Admin Panel</h1>
-        <p className='text-xs text-gray-500 mb-4'>Default: admin@zafran.com / admin1234</p>
+      <div className='bg-white shadow-md rounded-lg px-8 py-6 max-w-md w-full'>
+        <h1 className='text-2xl font-bold mb-1 tracking-tight text-gray-900'>Zafran Admin Panel</h1>
+        <p className='text-xs text-gray-500 mb-5'>Sign in with administrator credentials</p>
         <form onSubmit={onSubmitHandler}>
             <div className='mb-3 min-w-72'>
                 <p className='text-sm font-medium text-gray-700 mb-2'>Email Address</p>

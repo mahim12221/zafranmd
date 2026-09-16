@@ -10,7 +10,6 @@ const placeOrder = async (req, res) => {
     try {
         const { userId, items, amount, address} = req.body
         const orderData = {
-            _id: 'ord_' + Date.now(),
             userId,
             items,
             amount,
@@ -27,7 +26,7 @@ const placeOrder = async (req, res) => {
             await userModel.findByIdAndUpdate(userId, {cartData: {}})
         }
         
-        mockOrders.unshift(orderData);
+        mockOrders.unshift({ ...orderData, _id: 'ord_' + Date.now() });
         mockCarts.set(userId, {});
 
         res.json({success: true, message: "Order Placed"})
@@ -103,4 +102,30 @@ const updateStatus = async (req, res) => {
     }
 }
 
-export {placeOrder, placeOrderRazorpay, placeOrderStripe, allOrders, updateStatus, userOrders, mockOrders}
+// App settings (Delivery Fee, etc.)
+let appSettings = {
+    deliveryFee: 60,
+    deliveryFeeDhaka: 60,
+    deliveryFeeOutside: 120,
+    freeDeliveryThreshold: 2000
+};
+
+const getSettings = async (req, res) => {
+    res.json({ success: true, settings: appSettings });
+};
+
+const updateSettings = async (req, res) => {
+    try {
+        const { deliveryFee, deliveryFeeDhaka, deliveryFeeOutside, freeDeliveryThreshold } = req.body;
+        if (deliveryFee !== undefined) appSettings.deliveryFee = Number(deliveryFee);
+        if (deliveryFeeDhaka !== undefined) appSettings.deliveryFeeDhaka = Number(deliveryFeeDhaka);
+        if (deliveryFeeOutside !== undefined) appSettings.deliveryFeeOutside = Number(deliveryFeeOutside);
+        if (freeDeliveryThreshold !== undefined) appSettings.freeDeliveryThreshold = Number(freeDeliveryThreshold);
+        res.json({ success: true, message: "Delivery settings updated successfully", settings: appSettings });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export {placeOrder, placeOrderRazorpay, placeOrderStripe, allOrders, updateStatus, userOrders, getSettings, updateSettings, mockOrders}

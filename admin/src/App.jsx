@@ -9,8 +9,10 @@ import Login from './components/Login';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
-export const currency = '$';
+import { resolveBackendUrl } from './utils/backendUrl';
+
+export const backendUrl = resolveBackendUrl();
+export const currency = '৳';
 
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem('adminToken') ? localStorage.getItem('adminToken') : ''); 

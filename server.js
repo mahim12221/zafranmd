@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 import connectDB from './backend/config/mongodb.js';
 import connectCloudinary from './backend/config/cloudinary.js';
 import userRouter from './backend/routes/userRoute.js';
@@ -14,9 +15,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Connect DB & Cloudinary
+// Connect DB & Cloudinary safely
 await connectDB();
 await connectCloudinary();
 
@@ -26,7 +27,11 @@ app.use(cors());
 
 // API Endpoints
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'mongodb' : 'fallback',
+    time: new Date().toISOString()
+  });
 });
 
 app.use('/api/user', userRouter);

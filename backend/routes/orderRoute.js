@@ -1,9 +1,13 @@
 import express from 'express'
-import { placeOrder, placeOrderRazorpay, placeOrderStripe, updateStatus, allOrders, userOrders } from '../controllers/orderController.js'
+import { placeOrder, placeOrderRazorpay, placeOrderStripe, updateStatus, allOrders, userOrders, getSettings, updateSettings } from '../controllers/orderController.js'
 import adminAuth from '../middleware/adminAuth.js'
 import authUser from '../middleware/auth.js'
 
 const orderRouter = express.Router()
+
+// Settings features
+orderRouter.get('/settings', getSettings)
+orderRouter.post('/settings', adminAuth, updateSettings)
 
 // Admin features
 orderRouter.post('/list', adminAuth, allOrders)

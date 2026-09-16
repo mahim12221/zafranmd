@@ -4,7 +4,7 @@ import { backendUrl, currency } from '../App'
 import { toast } from 'react-toastify'
 import { useState, useEffect } from 'react'
 
-const List = () => {
+const List = ({ token }) => {
   const [list, setList] = useState([])
   const fetchList = async()=>{
     try{

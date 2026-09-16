@@ -121,4 +121,39 @@ const adminLogin = async (req, res) => {
     }
 }
 
-export { loginUser, registerUser, adminLogin, mockUsers };
+// Route for getting user profile
+const getUserProfile = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (mongoose.connection.readyState === 1) {
+            const user = await userModel.findById(userId).select('-password');
+            if (user) {
+                return res.json({ success: true, user });
+            }
+        }
+        
+        // Search in mockUsers
+        for (const user of mockUsers.values()) {
+            if (user._id === userId) {
+                const { password, ...safeUser } = user;
+                return res.json({ success: true, user: safeUser });
+            }
+        }
+
+        // Return a generic fallback user if token is valid
+        res.json({
+            success: true,
+            user: {
+                _id: userId,
+                name: 'Valued Customer',
+                email: 'customer@zafran.com',
+                role: 'Customer'
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export { loginUser, registerUser, adminLogin, getUserProfile, mockUsers };
