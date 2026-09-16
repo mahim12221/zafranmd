@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import Title from '../components/Title';
 import CartTotal from '../components/CartTotal';
 import { assets } from '../assets/assets';
@@ -20,8 +20,15 @@ const bdDistricts = {
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
-  const { backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products } = useContext(ShopContext);
+  const { backendUrl, token, cartItems, setCartItems, clearCart, getCartAmount, delivery_fee, products } = useContext(ShopContext);
   const [method, setMethod] = useState('cod');
+
+  useEffect(() => {
+    if (!token && !localStorage.getItem('token')) {
+      toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+      navigate('/login?redirect=/place-order', { replace: true });
+    }
+  }, [token]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -45,6 +52,13 @@ const PlaceOrder = () => {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    const activeToken = token || localStorage.getItem('token');
+    if (!activeToken) {
+      toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+      navigate('/login?redirect=/place-order');
+      return;
+    }
+
     try {
       let orderItems = [];
 
@@ -60,8 +74,13 @@ const PlaceOrder = () => {
           }
         });
       });
-      console.log(formData);
       
+      if (orderItems.length === 0) {
+        toast.error('আপনার কার্টে কোনো প্রোডাক্ট নেই');
+        navigate('/collection');
+        return;
+      }
+
       let orderData = {
         address: formData,
         items: orderItems,
@@ -70,9 +89,11 @@ const PlaceOrder = () => {
 
       switch (method) {
         case 'cod': {
-          const response = await axios.post(`${backendUrl || ''}/api/order/place`, orderData, { headers: { token } });
+          const response = await axios.post(`${backendUrl || ''}/api/order/place`, orderData, { headers: { token: activeToken } });
           if (response.data.success) {
-            setCartItems({});
+            if (clearCart) clearCart();
+            else setCartItems({});
+            toast.success('আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!');
             navigate('/orders');
           } else {
             toast.error(response.data.message);

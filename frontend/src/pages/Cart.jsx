@@ -3,9 +3,10 @@ import { ShopContext } from '../context/ShopContext';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 import CartTotal from '../components/CartTotal';
+import { toast } from 'react-toastify';
 
 const Cart = () => {
-  const { products, currency, cartItems, updateQuantity, navigate} = useContext(ShopContext);
+  const { products, currency, cartItems, updateQuantity, navigate, token } = useContext(ShopContext);
   const [cartData, setCartData] = useState([]);
   useEffect(()=>{
     if(products.length > 0){
@@ -75,7 +76,18 @@ const Cart = () => {
           <CartTotal/>
           <div className='w-full text-end'>
             <button 
-              onClick={()=> navigate('/place-order')} 
+              onClick={() => {
+                if (cartData.length === 0) {
+                  toast.error('আপনার কার্ট খালি!');
+                  return;
+                }
+                if (!token && !localStorage.getItem('token')) {
+                  toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+                  navigate('/login?redirect=/place-order');
+                } else {
+                  navigate('/place-order');
+                }
+              }} 
               className='w-full bg-black text-white text-xs sm:text-sm font-bold tracking-wider uppercase my-8 py-4 rounded-xl hover:bg-neutral-800 transition active:scale-98 shadow-sm cursor-pointer'
             >
               PROCEED TO CHECKOUT

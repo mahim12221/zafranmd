@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 const Product = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { products, currency, addToCart, backendUrl } = useContext(ShopContext);
+  const { products, currency, addToCart, backendUrl, token } = useContext(ShopContext);
   const [productData, setProductData] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
@@ -32,6 +32,7 @@ const Product = () => {
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     fetchProductData();
   }, [productId, products]);
 
@@ -90,7 +91,12 @@ const Product = () => {
   const handleOrderNow = async () => {
     if (!productData) return;
     await addToCart(productData._id, size || 'Standard', selectedColor);
-    navigate('/place-order');
+    if (!token && !localStorage.getItem('token')) {
+      toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+      navigate('/login?redirect=/place-order');
+    } else {
+      navigate('/place-order');
+    }
   };
 
   return productData ? (

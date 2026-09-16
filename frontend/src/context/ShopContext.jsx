@@ -18,9 +18,16 @@ const ShopContextProvider = (props) => {
     const [deliveryFeeOutside, setDeliveryFeeOutside] = useState(120);
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
-    const [cartItems, setCartItems] = useState({});
+    const [cartItems, setCartItems] = useState(() => {
+        try {
+            const saved = localStorage.getItem('zafran_cart');
+            return saved ? JSON.parse(saved) : {};
+        } catch (e) {
+            return {};
+        }
+    });
     const [products, setProducts] = useState(localProducts || []);
-    const [token, setToken] = useState('');
+    const [token, setToken] = useState(() => localStorage.getItem('token') || '');
     const navigate = useNavigate();
 
     const fetchDeliverySettings = async () => {
@@ -56,6 +63,7 @@ const ShopContextProvider = (props) => {
             cartData[itemId][variantKey] = 1;
         }
         setCartItems(cartData);
+        localStorage.setItem('zafran_cart', JSON.stringify(cartData));
         toast.success('Added to Cart!');
         if(token){
             try{
@@ -88,6 +96,7 @@ const ShopContextProvider = (props) => {
         let cartData = structuredClone(cartItems);
         cartData[itemId][size] = quantity;
         setCartItems(cartData);
+        localStorage.setItem('zafran_cart', JSON.stringify(cartData));
         if(token){
             try{
                 await axios.post(`${backendUrl || ''}/api/cart/update`, {itemId, size, quantity}, {headers: {token}})
@@ -142,11 +151,53 @@ const ShopContextProvider = (props) => {
         }
     }
 
-    const getUserCart = async (token) => {
+    const clearCart = () => {
+        setCartItems({});
+        localStorage.removeItem('zafran_cart');
+    };
+
+    const getUserCart = async (authToken) => {
+        const activeToken = authToken || token;
+        if (!activeToken) return;
         try{
-            const response = await axios.post(`${backendUrl || ''}/api/cart/get`, {}, {headers: {token}})
+            const response = await axios.post(`${backendUrl || ''}/api/cart/get`, {}, {headers: {token: activeToken}})
             if(response.data.success && response.data.cartData){
-                setCartItems(response.data.cartData);
+                const serverCart = response.data.cartData || {};
+                let localCart = {};
+                try {
+                    const saved = localStorage.getItem('zafran_cart');
+                    localCart = saved ? JSON.parse(saved) : {};
+                } catch (e) {}
+
+                // Merge local unauthenticated cart with server cart
+                let merged = { ...serverCart };
+                let needSync = false;
+                for (const itemId in localCart) {
+                    if (!merged[itemId]) merged[itemId] = {};
+                    for (const variant in localCart[itemId]) {
+                        const localQty = localCart[itemId][variant];
+                        if (localQty > 0) {
+                            if (!merged[itemId][variant] || merged[itemId][variant] < localQty) {
+                                merged[itemId][variant] = localQty;
+                                needSync = true;
+                            }
+                        }
+                    }
+                }
+
+                setCartItems(merged);
+                localStorage.setItem('zafran_cart', JSON.stringify(merged));
+
+                if (needSync) {
+                    for (const itemId in merged) {
+                        for (const variant in merged[itemId]) {
+                            const qty = merged[itemId][variant];
+                            if (qty > 0) {
+                                axios.post(`${backendUrl || ''}/api/cart/update`, { itemId, size: variant, quantity: qty }, { headers: { token: activeToken } }).catch(() => {});
+                            }
+                        }
+                    }
+                }
             }
         }
         catch (error){
@@ -160,8 +211,9 @@ const ShopContextProvider = (props) => {
 
     useEffect(()=>{
         if(!token && localStorage.getItem('token')){
-            setToken(localStorage.getItem('token'))
-            getUserCart(localStorage.getItem('token'))
+            const stored = localStorage.getItem('token');
+            setToken(stored);
+            getUserCart(stored);
         }
     }, [token])
 
@@ -169,9 +221,9 @@ const ShopContextProvider = (props) => {
         products, currency, delivery_fee: deliveryFee,
         deliveryFee, setDeliveryFee, deliveryFeeDhaka, deliveryFeeOutside, fetchDeliverySettings,
         search, setSearch, showSearch, setShowSearch,
-        cartItems, setCartItems, addToCart, 
+        cartItems, setCartItems, clearCart, addToCart, 
         getCartCount, updateQuantity, getCartAmount,
-        navigate, backendUrl, token, setToken,
+        navigate, backendUrl, token, setToken, getUserCart,
         setProducts
     } 
     return ( 
