@@ -64,7 +64,7 @@ git push -u origin main
    - **Branch**: `main`
    - **Build Command**: 
      ```bash
-     npm install && npm run build
+     npm install --include=dev && npm run build
      ```
    - **Start Command**: 
      ```bash
@@ -86,6 +86,17 @@ git push -u origin main
 5. **Deploy বাটনে ক্লিক করুন**:
    - নিচে **Create Web Service** বাটনে ক্লিক করুন।
    - ২-৩ মিনিটের মধ্যে Render বিল্ড কমপ্লিট করে আপনাকে একটি লাইভ URL দিয়ে দেবে (যেমন: `https://zafran-store.onrender.com`)।
+
+---
+
+## 🛠️ সমাধান: "Cannot find package @vitejs/plugin-react" এরর সমাধান
+Render-এ ডিপ্লয় করার সময় যদি কখনো `Cannot find package '@vitejs/plugin-react'` এরর আসে:
+1. **কারণ**: Render-এ `NODE_ENV=production` থাকার কারণে ডিফল্ট `npm install` devDependencies স্কিপ করে ফেলে।
+2. **স্থায়ী সমাধান (আমরা অলরেডি কোডে ঠিক করে দিয়েছি)**:
+   - `@vitejs/plugin-react`, `vite`, `tailwindcss`, `postcss`, `autoprefixer` প্যাকেজগুলোকে সরাসরি `dependencies`-এ নিয়ে আসা হয়েছে।
+   - GitHub-এ নতুন কোড পুশ করার পর Render-এর **Settings**-এ যান:
+     - **Build Command** ফিল্ডটিতে দিন: `npm install --include=dev && npm run build`
+     - সেভ করুন এবং **Manual Deploy** -> **Clear build cache & deploy** চাপুন।
 
 🎉 **অভিনন্দন! আপনার ই-কমার্স ওয়েবসাইট এখন বিশ্বজুড়ে সবার জন্য লাইভ!**
 
