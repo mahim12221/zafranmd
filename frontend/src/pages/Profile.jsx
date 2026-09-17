@@ -88,19 +88,20 @@ const Profile = () => {
     if (!selectedFile && !imagePreview) return;
     setUploadingPic(true);
     try {
-      const formData = new FormData();
+      let res;
       if (selectedFile) {
+        const formData = new FormData();
         formData.append('profilePic', selectedFile);
-      } else if (imagePreview) {
-        formData.append('profilePic', imagePreview);
+        res = await axios.post(`${backendUrl || ''}/api/user/update-profile`, formData, {
+          headers: { token }
+        });
+      } else {
+        res = await axios.post(`${backendUrl || ''}/api/user/update-profile`, {
+          profilePic: imagePreview
+        }, {
+          headers: { token }
+        });
       }
-
-      const res = await axios.post(`${backendUrl || ''}/api/user/update-profile`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          token
-        }
-      });
 
       if (res.data.success) {
         toast.success('Profile picture updated successfully!');

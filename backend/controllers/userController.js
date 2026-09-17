@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { v2 as cloudinary } from 'cloudinary';
+import { mockCarts } from "./cartController.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || 'zafran_jwt_secret_key';
 
@@ -144,15 +145,39 @@ const registerUser = async (req, res) => {
     }
 }
 
-// In-memory or persisted admin profile
-let adminProfileData = {
-    name: 'Zafran Super Admin',
-    email: process.env.ADMIN_EMAIL || 'admin@zafran.com',
-    role: 'System Administrator',
-    profilePic: '',
-    phone: '+880 1700-000000',
-    title: 'Executive Store Manager',
-    lastLogin: new Date()
+import fs from 'fs';
+import path from 'path';
+
+const ADMIN_PROFILE_FILE = path.resolve('./adminProfile.json');
+
+const loadAdminProfileFromFile = () => {
+    try {
+        if (fs.existsSync(ADMIN_PROFILE_FILE)) {
+            const raw = fs.readFileSync(ADMIN_PROFILE_FILE, 'utf8');
+            return JSON.parse(raw);
+        }
+    } catch (e) {
+        console.log('Error reading adminProfile.json:', e.message);
+    }
+    return {
+        name: 'Zafran Super Admin',
+        email: process.env.ADMIN_EMAIL || 'admin@zafran.com',
+        role: 'System Administrator',
+        profilePic: '',
+        phone: '+880 1700-000000',
+        title: 'Executive Store Manager',
+        lastLogin: new Date()
+    };
+};
+
+let adminProfileData = loadAdminProfileFromFile();
+
+const saveAdminProfileToFile = (data) => {
+    try {
+        fs.writeFileSync(ADMIN_PROFILE_FILE, JSON.stringify(data, null, 2), 'utf8');
+    } catch (e) {
+        console.log('Error saving adminProfile.json:', e.message);
+    }
 };
 
 // Route for admin login
@@ -220,6 +245,8 @@ const updateAdminProfile = async (req, res) => {
         if (title !== undefined) adminProfileData.title = title;
         if (profilePic) adminProfileData.profilePic = profilePic;
 
+        saveAdminProfileToFile(adminProfileData);
+
         res.json({ 
             success: true, 
             message: "Admin profile updated successfully", 
@@ -234,7 +261,7 @@ const updateAdminProfile = async (req, res) => {
 // Route for getting user profile
 const getUserProfile = async (req, res) => {
     try {
-        const userId = req.body.userId || req.query.userId;
+        const userId = req.params.userId || req.body.userId || req.query.userId || req.userId;
         if (!userId) {
             return res.json({ success: false, message: "User ID required" });
         }
@@ -299,81 +326,75 @@ const updateUserProfile = async (req, res) => {
 
         if (req.file) {
             try {
-                const uploadRes = await cloudinary.uploader.upload(req.file.path, { resource_type: "image" });
-                profilePic = uploadRes.secure_url;
+                if (process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_NAME) {
+                    const uploadRes = await cloudinary.uploader.upload(req.file.path, { resource_type: "image" });
+                    profilePic = uploadRes.secure_url;
+                } else {
+                    const fs = await import('fs');
+                    if (req.file.path && fs.existsSync(req.file.path)) {
+                        const fileData = fs.readFileSync(req.file.path);
+                        profilePic = `data:${req.file.mimetype || 'image/jpeg'};base64,${fileData.toString('base64')}`;
+                    }
+                }
             } catch (cErr) {
                 console.log('Cloudinary upload error, using local/data url fallback:', cErr.message);
                 try {
                     const fs = await import('fs');
-                    const fileData = fs.readFileSync(req.file.path);
-                    profilePic = `data:${req.file.mimetype || 'image/jpeg'};base64,${fileData.toString('base64')}`;
+                    if (req.file.path && fs.existsSync(req.file.path)) {
+                        const fileData = fs.readFileSync(req.file.path);
+                        profilePic = `data:${req.file.mimetype || 'image/jpeg'};base64,${fileData.toString('base64')}`;
+                    }
                 } catch (fsErr) {
                     console.log('FS read error:', fsErr.message);
                 }
             }
         }
 
-        if (mongoose.connection.readyState === 1) {
-            const updateFields = {};
-            if (name !== undefined && name !== '') updateFields.name = name;
-            if (phone !== undefined) updateFields.phone = phone;
-            if (address !== undefined) updateFields.address = address;
-            if (profilePic !== undefined && profilePic !== null) updateFields.profilePic = profilePic;
+        const updateFields = {};
+        if (name !== undefined && name !== '') updateFields.name = name;
+        if (phone !== undefined) updateFields.phone = phone;
+        if (address !== undefined) updateFields.address = address;
+        if (profilePic !== undefined && profilePic !== null) updateFields.profilePic = profilePic;
 
-            let updatedUser = null;
+        let updatedUser = null;
+
+        if (mongoose.connection.readyState === 1) {
             if (mongoose.Types.ObjectId.isValid(userId)) {
                 updatedUser = await userModel.findByIdAndUpdate(userId, updateFields, { new: true }).select('-password');
             }
-
             if (!updatedUser) {
-                // Check in mockUsers
-                for (const [emailKey, userObj] of mockUsers.entries()) {
-                    if (userObj._id === userId) {
-                        if (name) userObj.name = name;
-                        if (phone !== undefined) userObj.phone = phone;
-                        if (address !== undefined) userObj.address = address;
-                        if (profilePic !== undefined) userObj.profilePic = profilePic;
-                        mockUsers.set(emailKey, userObj);
-                        const { password: _, ...safeUser } = userObj;
-                        return res.json({ success: true, message: "Profile updated successfully", user: safeUser });
-                    }
-                }
-
-                // If user was created prior or mock user
-                return res.json({
-                    success: true,
-                    message: "Profile updated successfully",
-                    user: {
-                        _id: userId,
-                        name: name || 'Valued Customer',
-                        phone: phone || '',
-                        address: address || '',
-                        profilePic: profilePic || ''
-                    }
-                });
+                updatedUser = await userModel.findOneAndUpdate({ _id: userId }, updateFields, { new: true }).select('-password');
             }
-            return res.json({ success: true, message: "Profile updated successfully", user: updatedUser });
-        } else {
-            // In-memory fallback
-            for (const [emailKey, userObj] of mockUsers.entries()) {
-                if (userObj._id === userId) {
-                    if (name) userObj.name = name;
-                    if (phone !== undefined) userObj.phone = phone;
-                    if (address !== undefined) userObj.address = address;
-                    if (profilePic !== undefined) userObj.profilePic = profilePic;
-                    mockUsers.set(emailKey, userObj);
-                    const { password: _, ...safeUser } = userObj;
-                    return res.json({ success: true, message: "Profile updated successfully", user: safeUser });
-                }
-            }
-            return res.json({ 
-                success: true, 
-                message: "Profile updated successfully", 
-                user: { _id: userId, name: name || 'Valued Customer', phone: phone || '', address: address || '', profilePic: profilePic || '' } 
-            });
         }
+
+        // Search and update mockUsers
+        for (const [emailKey, userObj] of mockUsers.entries()) {
+            if (userObj._id === userId) {
+                if (name) userObj.name = name;
+                if (phone !== undefined) userObj.phone = phone;
+                if (address !== undefined) userObj.address = address;
+                if (profilePic !== undefined) userObj.profilePic = profilePic;
+                mockUsers.set(emailKey, userObj);
+                if (!updatedUser) {
+                    const { password: _, ...safeUser } = userObj;
+                    updatedUser = safeUser;
+                }
+            }
+        }
+
+        if (!updatedUser) {
+            updatedUser = {
+                _id: userId,
+                name: name || 'Valued Customer',
+                phone: phone || '',
+                address: address || '',
+                profilePic: profilePic || ''
+            };
+        }
+
+        return res.json({ success: true, message: "Profile updated successfully", user: updatedUser });
     } catch (error) {
-        console.error(error);
+        console.error('updateUserProfile error:', error);
         res.json({ success: false, message: error.message });
     }
 }
@@ -408,4 +429,52 @@ const getAllUsers = async (req, res) => {
     }
 }
 
-export { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, mockUsers };
+// Route for admin to delete/remove a user account
+const deleteUser = async (req, res) => {
+    try {
+        const { userId, email } = req.body;
+        if (!userId && !email) {
+            return res.json({ success: false, message: "User ID or Email is required" });
+        }
+
+        let deleted = false;
+
+        if (mongoose.connection.readyState === 1) {
+            const queryConditions = [];
+            if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+                queryConditions.push({ _id: userId });
+            }
+            if (email) {
+                queryConditions.push({ email: email.toLowerCase().trim() });
+            }
+            if (queryConditions.length > 0) {
+                const result = await userModel.deleteMany({ $or: queryConditions });
+                if (result.deletedCount > 0) {
+                    deleted = true;
+                }
+            }
+        }
+
+        // Also delete from in-memory fallback mockUsers
+        for (const [key, val] of mockUsers.entries()) {
+            if (
+                (userId && String(val._id) === String(userId)) ||
+                (email && val.email?.toLowerCase().trim() === email.toLowerCase().trim()) ||
+                key.toLowerCase().trim() === (email || '').toLowerCase().trim()
+            ) {
+                mockUsers.delete(key);
+                deleted = true;
+            }
+        }
+
+        return res.json({
+            success: true,
+            message: "User account removed successfully. The user can register freshly with this email later."
+        });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, mockUsers };

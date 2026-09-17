@@ -1,46 +1,74 @@
 import orderModel from "../models/orderModel.js"
 import userModel from "../models/userModel.js"
+import productModel from "../models/productModel.js"
 import mongoose from "mongoose"
 import { mockCarts } from "./cartController.js"
+import { mockProducts } from "./productController.js"
 
 // In-memory fallback orders
 let mockOrders = [];
 
-// 8 days in milliseconds
-const EIGHT_DAYS_MS = 8 * 24 * 60 * 60 * 1000;
+// Time constants
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000; // 24 hours for cancelled orders
+const EIGHT_DAYS_MS = 8 * 24 * 60 * 60 * 1000;       // 8 days for delivered orders
 
-// Helper to clean up delivered orders older than 8 days to save database storage
-const cleanupOldDeliveredOrders = async () => {
+// Helper to clean up cancelled orders (older than 24h) and delivered orders (older than 8d)
+const cleanupExpiredOrders = async () => {
     try {
-        const expiryThreshold = new Date(Date.now() - EIGHT_DAYS_MS);
+        const now = Date.now();
+        const cancelledExpiryThreshold = new Date(now - TWENTY_FOUR_HOURS_MS);
+        const deliveredExpiryThreshold = new Date(now - EIGHT_DAYS_MS);
+
         if (mongoose.connection.readyState === 1) {
-            // Delete delivered orders whose deliveredDate or order date is older than 8 days
+            // Delete cancelled orders older than 24 hours
+            await orderModel.deleteMany({
+                $or: [
+                    { status: 'Cancelled' },
+                    { status: { $regex: /^Cancelled/i } },
+                    { status: { $regex: /^Order Cancelled/i } }
+                ],
+                $or: [
+                    { cancelledDate: { $lte: cancelledExpiryThreshold } },
+                    { cancelledDate: { $exists: false }, date: { $lte: cancelledExpiryThreshold } },
+                    { updatedAt: { $lte: cancelledExpiryThreshold } }
+                ]
+            });
+
+            // Delete delivered orders older than 8 days
             await orderModel.deleteMany({
                 status: 'Delivered',
                 $or: [
-                    { deliveredDate: { $lte: expiryThreshold } },
-                    { deliveredDate: { $exists: false }, date: { $lte: expiryThreshold } }
+                    { deliveredDate: { $lte: deliveredExpiryThreshold } },
+                    { deliveredDate: { $exists: false }, date: { $lte: deliveredExpiryThreshold } }
                 ]
             });
         }
+
         // Clean up mock fallback orders as well
-        const now = Date.now();
         mockOrders = mockOrders.filter(o => {
+            const statusStr = String(o.status || '').toLowerCase();
+            const isCancelled = statusStr === 'cancelled' || statusStr.includes('cancel');
+            if (isCancelled) {
+                const cancelTime = o.cancelledDate ? new Date(o.cancelledDate).getTime() : new Date(o.date).getTime();
+                if (now - cancelTime >= TWENTY_FOUR_HOURS_MS) {
+                    return false; // Remove cancelled order after 24 hours
+                }
+            }
             if (o.status === 'Delivered') {
                 const deliveredTime = o.deliveredDate ? new Date(o.deliveredDate).getTime() : new Date(o.date).getTime();
                 if (now - deliveredTime >= EIGHT_DAYS_MS) {
-                    return false; // Remove order to free storage
+                    return false; // Remove delivered order after 8 days
                 }
             }
             return true;
         });
     } catch (err) {
-        console.log('Error cleaning up old delivered orders:', err.message);
+        console.log('Error cleaning up expired orders:', err.message);
     }
 };
 
-// Run cleanup periodically every hour
-setInterval(cleanupOldDeliveredOrders, 60 * 60 * 1000);
+// Run cleanup periodically every 15 minutes
+setInterval(cleanupExpiredOrders, 15 * 60 * 1000);
 
 
 const placeOrder = async (req, res) => {
@@ -57,16 +85,43 @@ const placeOrder = async (req, res) => {
             date: Date.now()
         }
 
+        let savedOrderId = 'ord_' + Date.now();
         if (mongoose.connection.readyState === 1) {
             const newOrder = new orderModel(orderData)
-            await newOrder.save()
+            const saved = await newOrder.save()
+            savedOrderId = saved._id.toString();
             await userModel.findByIdAndUpdate(userId, {cartData: {}})
         }
         
-        mockOrders.unshift({ ...orderData, _id: 'ord_' + Date.now() });
+        mockOrders.unshift({ ...orderData, _id: savedOrderId });
         mockCarts.set(userId, {});
 
-        res.json({success: true, message: "Order Placed"})
+        // Increment salesCount for each ordered product
+        if (Array.isArray(items)) {
+            for (const item of items) {
+                const prodId = item._id || item.itemId || item.id;
+                const qty = Number(item.quantity) || 1;
+                if (prodId) {
+                    if (mongoose.connection.readyState === 1) {
+                        try {
+                            if (mongoose.Types.ObjectId.isValid(prodId)) {
+                                await productModel.findByIdAndUpdate(prodId, { $inc: { salesCount: qty } });
+                            } else {
+                                await productModel.findOneAndUpdate({ _id: prodId }, { $inc: { salesCount: qty } });
+                            }
+                        } catch (pErr) {
+                            console.log('Error updating salesCount:', pErr.message);
+                        }
+                    }
+                    const mockProd = mockProducts.find(p => String(p._id) === String(prodId));
+                    if (mockProd) {
+                        mockProd.salesCount = (mockProd.salesCount || 0) + qty;
+                    }
+                }
+            }
+        }
+
+        res.json({success: true, message: "Order Placed", orderId: savedOrderId})
     }
     catch (error){
         console.log(error)
@@ -87,9 +142,9 @@ const placeOrderRazorpay = async (req, res) => {
 // All orders data for admin panel
 const allOrders = async (req, res) => {
     try{
-        await cleanupOldDeliveredOrders();
+        await cleanupExpiredOrders();
         if (mongoose.connection.readyState === 1) {
-            const orders = await orderModel.find({})
+            const orders = await orderModel.find({}).sort({ date: -1 })
             if (orders && orders.length > 0) {
                 return res.json({success: true, orders})
             }
@@ -105,15 +160,18 @@ const allOrders = async (req, res) => {
 // User order data for frontend
 const userOrders = async (req, res) => {
     try{
-        await cleanupOldDeliveredOrders();
+        await cleanupExpiredOrders();
         const {userId} = req.body
         if (mongoose.connection.readyState === 1) {
-            const orders = await orderModel.find({userId})
+            const query = mongoose.Types.ObjectId.isValid(userId)
+                ? { $or: [{ userId: userId }, { userId: new mongoose.Types.ObjectId(userId) }, { userId: String(userId) }] }
+                : { userId: String(userId) };
+            const orders = await orderModel.find(query).sort({ date: -1 })
             if (orders && orders.length > 0) {
                 return res.json({success: true, orders})
             }
         }
-        const orders = mockOrders.filter(o => o.userId === userId);
+        const orders = mockOrders.filter(o => String(o.userId) === String(userId));
         res.json({success: true, orders})
     }
     catch (error){
@@ -132,10 +190,18 @@ const cancelOrderUser = async (req, res) => {
 
         let orderFound = false;
 
-        if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(orderId)) {
-            const existingOrder = await orderModel.findById(orderId);
+        if (mongoose.connection.readyState === 1) {
+            let existingOrder = null;
+            if (mongoose.Types.ObjectId.isValid(orderId)) {
+                existingOrder = await orderModel.findById(orderId);
+            }
+            if (!existingOrder) {
+                existingOrder = await orderModel.findOne({ _id: orderId });
+            }
+
             if (existingOrder) {
-                if (existingOrder.userId && existingOrder.userId !== userId) {
+                // Ensure userId matches using string comparison
+                if (existingOrder.userId && String(existingOrder.userId) !== String(userId)) {
                     return res.json({ success: false, message: "Unauthorized to cancel this order" });
                 }
                 if (existingOrder.status === 'Delivered') {
@@ -145,14 +211,15 @@ const cancelOrderUser = async (req, res) => {
                     return res.json({ success: false, message: "Order is already cancelled" });
                 }
                 existingOrder.status = 'Cancelled';
+                existingOrder.cancelledDate = new Date();
                 existingOrder.cancelReason = reason || 'Cancelled by Customer';
                 await existingOrder.save();
                 orderFound = true;
             }
         }
 
-        // Also update in mock fallback orders
-        const mockOrder = mockOrders.find(o => o._id === orderId);
+        // Also update in mock fallback orders by matching string IDs
+        const mockOrder = mockOrders.find(o => String(o._id) === String(orderId));
         if (mockOrder) {
             if (mockOrder.status === 'Delivered') {
                 return res.json({ success: false, message: "Delivered orders cannot be cancelled" });
@@ -161,6 +228,7 @@ const cancelOrderUser = async (req, res) => {
                 return res.json({ success: false, message: "Order is already cancelled" });
             }
             mockOrder.status = 'Cancelled';
+            mockOrder.cancelledDate = new Date();
             mockOrder.cancelReason = reason || 'Cancelled by Customer';
             orderFound = true;
         }
@@ -169,7 +237,8 @@ const cancelOrderUser = async (req, res) => {
             return res.json({ success: false, message: "Order not found" });
         }
 
-        res.json({ success: true, message: "Order cancelled successfully" });
+        await cleanupExpiredOrders();
+        res.json({ success: true, message: "Order cancelled successfully (will auto-delete after 24h)" });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -185,26 +254,35 @@ const updateStatus = async (req, res) => {
             updateData.deliveredDate = new Date();
         }
         if (cancelReason || status === 'Cancelled' || status?.startsWith('Cancelled')) {
+            updateData.cancelledDate = new Date();
             updateData.cancelReason = cancelReason || 'Cancelled by Admin';
         }
 
+        let orderFound = false;
+
         if (mongoose.connection.readyState === 1) {
             if (mongoose.Types.ObjectId.isValid(orderId)) {
-                await orderModel.findByIdAndUpdate(orderId, updateData)
+                const updated = await orderModel.findByIdAndUpdate(orderId, updateData, { new: true })
+                if (updated) orderFound = true;
+            } else {
+                const updated = await orderModel.findOneAndUpdate({ _id: orderId }, updateData, { new: true })
+                if (updated) orderFound = true;
             }
         }
-        const order = mockOrders.find(o => o._id === orderId);
+        const order = mockOrders.find(o => String(o._id) === String(orderId));
         if (order) {
             order.status = status;
             if (status === 'Delivered') {
                 order.deliveredDate = new Date();
             }
             if (cancelReason || status === 'Cancelled' || status?.startsWith('Cancelled')) {
+                order.cancelledDate = new Date();
                 order.cancelReason = cancelReason || 'Cancelled by Admin';
             }
+            orderFound = true;
         }
-        await cleanupOldDeliveredOrders();
-        res.json({success: true, message: status === 'Delivered' ? "Order marked as Delivered (auto-cleans after 8 days to save storage)" : status?.startsWith('Cancelled') ? "Order Cancelled / Rejected" : "Order Status Updated"})
+        await cleanupExpiredOrders();
+        res.json({success: true, message: status === 'Delivered' ? "Order marked as Delivered (auto-cleans after 8 days)" : status?.startsWith('Cancelled') ? "Order Cancelled (auto-deletes after 24 hours)" : "Order Status Updated"})
     }
     catch (error){
         console.log(error)

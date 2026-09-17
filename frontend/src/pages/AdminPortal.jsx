@@ -31,6 +31,14 @@ const AdminPortal = () => {
   const [productsList, setProductsList] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
 
+  // Product Details & Quick Edit Modal State
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [editPrice, setEditPrice] = useState('');
+  const [editDiscount, setEditDiscount] = useState('0');
+  const [editColors, setEditColors] = useState([]);
+  const [newColorInput, setNewColorInput] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // Orders list state
   const [ordersList, setOrdersList] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -100,6 +108,13 @@ const AdminPortal = () => {
       fetchOrders();
       fetchUsers();
       fetchAdminProfile();
+
+      // Periodic auto-sync so cancellations from customer or updates reflect without reload
+      const syncTimer = setInterval(() => {
+        fetchOrders();
+        fetchUsers();
+      }, 10000);
+      return () => clearInterval(syncTimer);
     } else {
       localStorage.removeItem('adminToken');
     }
@@ -194,6 +209,36 @@ const AdminPortal = () => {
       console.error('Error fetching users:', err);
     } finally {
       setLoadingUsers(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId, userEmail, userName) => {
+    if (!userId && !userEmail) return;
+
+    // Optimistic removal
+    const originalUsers = [...usersList];
+    setUsersList(prev => prev.filter(u => u._id !== userId && u.email !== userEmail));
+    if (selectedUserForModal && (selectedUserForModal._id === userId || selectedUserForModal.email === userEmail)) {
+      setSelectedUserForModal(null);
+    }
+
+    try {
+      const activeToken = adminToken || localStorage.getItem('adminToken') || localStorage.getItem('token') || 'admin_secret_token';
+      const res = await axios.post(
+        (backendUrl || '') + '/api/user/admin/delete-user',
+        { userId, email: userEmail },
+        { headers: { token: activeToken } }
+      );
+      if (res.data.success) {
+        toast.success(res.data.message || 'User account removed successfully');
+      } else {
+        toast.error(res.data.message || 'Failed to remove user account');
+        setUsersList(originalUsers);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || err.message || 'User delete failed');
+      setUsersList(originalUsers);
     }
   };
 
@@ -298,18 +343,116 @@ const AdminPortal = () => {
     }
   };
 
-  const handleRemoveProduct = async (id) => {
+  const handleRemoveProduct = async (id, e) => {
+    if (e) e.stopPropagation();
+    
+    // Optimistic UI update so product vanishes immediately on click
+    const originalList = [...productsList];
+    setProductsList(prev => prev.filter(p => p._id !== id));
+    if (selectedProduct && selectedProduct._id === id) {
+      setSelectedProduct(null);
+    }
+
     try {
-      const res = await axios.post((backendUrl || '') + '/api/product/remove', { id }, { headers: { token: adminToken } });
+      const activeToken = adminToken || localStorage.getItem('adminToken') || localStorage.getItem('token') || 'admin_secret_token';
+      const res = await axios.post(
+        (backendUrl || '') + '/api/product/remove', 
+        { id }, 
+        { headers: { token: activeToken } }
+      );
       if (res.data.success) {
-        toast.success('Product removed');
-        fetchProducts();
+        toast.success('Product deleted successfully!');
+        if (getProductsData) getProductsData();
+      } else {
+        toast.error(res.data.message || 'Failed to delete product');
+        setProductsList(originalList);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || err.message || 'Delete operation failed');
+      setProductsList(originalList);
+    }
+  };
+
+  const openProductModal = (product) => {
+    setSelectedProduct(product);
+    setEditPrice(product.price || '');
+    setEditDiscount(product.discount || 0);
+    setEditColors(Array.isArray(product.colors) ? [...product.colors] : []);
+    setNewColorInput('');
+  };
+
+  const handleToggleStock = async (id, outOfStock, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const activeToken = adminToken || localStorage.getItem('adminToken') || localStorage.getItem('token') || 'admin_secret_token';
+      const res = await axios.post(
+        (backendUrl || '') + '/api/product/toggle-stock',
+        { id, outOfStock },
+        { headers: { token: activeToken } }
+      );
+      if (res.data.success) {
+        toast.success(res.data.message || "Stock status updated!");
+        const newStatus = res.data.outOfStock !== undefined ? res.data.outOfStock : outOfStock;
+        setProductsList(prev => prev.map(p => p._id === id ? { ...p, outOfStock: newStatus } : p));
+        if (selectedProduct && selectedProduct._id === id) {
+          setSelectedProduct(prev => ({ ...prev, outOfStock: newStatus }));
+        }
+      } else {
+        toast.error(res.data.message || "Could not update stock status");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || err.message || "Stock update failed");
+    }
+  };
+
+  const handleAddModalColor = () => {
+    if (!newColorInput.trim()) return;
+    const colorVal = newColorInput.trim();
+    if (!editColors.includes(colorVal)) {
+      setEditColors([...editColors, colorVal]);
+    }
+    setNewColorInput('');
+  };
+
+  const handleRemoveModalColor = (colorToRemove) => {
+    setEditColors(editColors.filter(c => c !== colorToRemove));
+  };
+
+  const handleSaveChanges = async () => {
+    if (!selectedProduct) return;
+    setIsUpdating(true);
+    try {
+      const res = await axios.post(
+        (backendUrl || '') + '/api/product/update',
+        {
+          id: selectedProduct._id,
+          price: Number(editPrice),
+          discount: Number(editDiscount),
+          colors: editColors
+        },
+        { headers: { token: adminToken } }
+      );
+
+      if (res.data.success) {
+        toast.success("Product details updated!");
+        const updated = res.data.product || { 
+          ...selectedProduct, 
+          price: Number(editPrice), 
+          discount: Number(editDiscount), 
+          colors: editColors 
+        };
+        setSelectedProduct(updated);
+        setProductsList(prev => prev.map(p => p._id === updated._id ? updated : p));
         if (getProductsData) getProductsData();
       } else {
         toast.error(res.data.message);
       }
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -317,10 +460,10 @@ const AdminPortal = () => {
     try {
       let cancelReason = customReason;
       if ((newStatus === 'Cancelled' || newStatus.startsWith('Cancelled')) && !cancelReason) {
-        cancelReason = window.prompt("Reason for cancellation / rejection (e.g., 'Fraud suspicion', 'User requested', 'Out of stock'):", "Cancelled by Admin (Risk/Fraud Inspection)");
-        if (cancelReason === null) return; // User pressed Cancel
+        cancelReason = "Cancelled by Admin";
       }
-      const res = await axios.post((backendUrl || '') + '/api/order/status', { orderId, status: newStatus, cancelReason }, { headers: { token: adminToken } });
+      const activeToken = adminToken || localStorage.getItem('adminToken') || localStorage.getItem('token') || 'admin_secret_token';
+      const res = await axios.post((backendUrl || '') + '/api/order/status', { orderId, status: newStatus, cancelReason }, { headers: { token: activeToken } });
       if (res.data.success) {
         toast.success(res.data.message || 'Status updated');
         fetchOrders();
@@ -648,72 +791,279 @@ const AdminPortal = () => {
 
         {/* Content Area */}
         <main className="flex-1 bg-white text-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800/50 min-h-[600px]">
-          {/* TAB 1: PRODUCT LIST */}
+          {/* TAB 1: PRODUCT LIST WITH QUICK EDIT & DETAILS MODAL */}
           {activeTab === 'list' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900">Inventory Items</h2>
-                <button
-                  onClick={fetchProducts}
-                  className="text-xs text-gray-500 hover:text-black font-medium"
-                >
-                  Refresh
-                </button>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Product Inventory & Stock Management</h2>
+                  <p className="text-xs text-gray-500">Click on any product row or Edit button to view details, edit price/discount/colors, or check comments.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold bg-black text-white px-3 py-1 rounded-full">
+                    Total: {productsList.length} Items
+                  </span>
+                  <button
+                    onClick={fetchProducts}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200"
+                  >
+                    🔄 Refresh
+                  </button>
+                </div>
               </div>
+
               {loadingList ? (
                 <p className="text-sm text-gray-500 py-8 text-center">Loading products...</p>
               ) : productsList.length === 0 ? (
                 <p className="text-sm text-gray-500 py-8 text-center">No products found.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-xs uppercase font-semibold text-gray-500 border-b">
-                      <tr>
-                        <th className="py-3 px-4">Item</th>
-                        <th className="py-3 px-4">Category</th>
-                        <th className="py-3 px-4">Price</th>
-                        <th className="py-3 px-4">Discount</th>
-                        <th className="py-3 px-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {productsList.map((item) => (
-                        <tr key={item._id} className="hover:bg-gray-50">
-                          <td className="py-3 px-4 flex items-center gap-3">
-                            <img
-                              src={(item.images && item.images[0]) || (item.image && item.image[0]) || '/placeholder.png'}
-                              alt={item.name}
-                              className="w-10 h-10 object-cover rounded"
-                            />
-                            <span className="font-medium text-gray-900 line-clamp-1">{item.name}</span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">
-                              {item.category} / {item.subCategory || item.subcategory}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 font-semibold text-gray-900">{currency}{item.price}</td>
-                          <td className="py-3 px-4">
-                            {Number(item.discount) > 0 ? (
-                              <span className="px-2 py-0.5 bg-red-100 text-red-700 font-bold text-xs rounded">
-                                -{item.discount}%
+                <div className="flex flex-col gap-2">
+                  {/* Table Header */}
+                  <div className="hidden md:grid grid-cols-[0.8fr_2.5fr_1fr_1fr_1.2fr_1.2fr] items-center py-2 px-3 border bg-gray-100 text-xs font-bold uppercase text-gray-700 rounded-lg">
+                    <b>Image</b>
+                    <b>Name & View</b>
+                    <b>Category</b>
+                    <b>Price</b>
+                    <b className="text-center">Stock Status</b>
+                    <b className="text-right">Actions</b>
+                  </div>
+
+                  {/* Product Rows */}
+                  {productsList.map((item) => (
+                    <div
+                      key={item._id}
+                      onClick={() => openProductModal(item)}
+                      className="grid grid-cols-[0.8fr_2fr_1fr_1fr] md:grid-cols-[0.8fr_2.5fr_1fr_1fr_1.2fr_1.2fr] items-center gap-2 py-2.5 px-3 border border-gray-200 rounded-xl text-sm bg-white hover:bg-blue-50/40 transition cursor-pointer group shadow-2xs"
+                    >
+                      <img
+                        src={(item.images && item.images[0]) || (item.image && item.image[0]) || '/placeholder.jpg'}
+                        alt={item.name}
+                        className="w-12 h-12 object-cover rounded-lg border border-gray-200 group-hover:scale-105 transition"
+                      />
+                      <div>
+                        <p className="font-bold text-gray-900 group-hover:text-blue-600 transition flex items-center gap-1.5 flex-wrap">
+                          <span>{item.name}</span>
+                          <span className="text-[10px] bg-sky-100 text-sky-800 font-semibold px-1.5 py-0.5 rounded">👁️ View</span>
+                        </p>
+                        {item.outOfStock && <span className="md:hidden text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Out of Stock</span>}
+                      </div>
+
+                      <p className="text-gray-600 text-xs truncate">{item.category}</p>
+
+                      <div>
+                        <p className="font-bold text-gray-900">{currency}{item.price}</p>
+                        {Number(item.discount) > 0 && <span className="text-[10px] font-bold text-red-500">-{item.discount}% Off</span>}
+                      </div>
+
+                      {/* Stock Toggle Button */}
+                      <div className="flex items-center justify-center" onClick={e => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleStock(item._id, !item.outOfStock, e)}
+                          className={`px-3 py-1.5 text-xs font-bold rounded-full transition shadow-2xs cursor-pointer flex items-center gap-1.5 ${
+                            item.outOfStock 
+                              ? 'bg-red-50 text-red-700 border border-red-300 hover:bg-red-100' 
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                          }`}
+                          title="Toggle Stock Availability"
+                        >
+                          <span className={`w-2 h-2 rounded-full ${item.outOfStock ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                          <span>{item.outOfStock ? 'Out of Stock' : 'In Stock'}</span>
+                        </button>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => openProductModal(item)}
+                          className="text-blue-600 hover:text-blue-800 font-bold px-2.5 py-1 hover:bg-blue-100/60 rounded-lg transition text-xs border border-blue-200"
+                          title="View Details & Edit"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveProduct(item._id, e)}
+                          className="text-red-600 hover:text-red-800 font-bold px-2.5 py-1 hover:bg-red-100/60 rounded-lg transition text-xs border border-red-200"
+                          title="Delete Product"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ADMIN PRODUCT DETAILS & QUICK EDIT MODAL */}
+              {selectedProduct && (
+                <div 
+                  className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn"
+                  onClick={() => setSelectedProduct(null)}
+                >
+                  <div 
+                    className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-200 my-8 space-y-5 text-gray-900 relative"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Close Modal Button */}
+                    <button
+                      onClick={() => setSelectedProduct(null)}
+                      className="absolute top-4 right-4 text-gray-400 hover:text-black font-bold text-lg bg-gray-100 hover:bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center transition cursor-pointer"
+                    >
+                      ✕
+                    </button>
+
+                    {/* Modal Header */}
+                    <div className="flex items-start gap-4 border-b pb-4">
+                      <img 
+                        src={(selectedProduct.images && selectedProduct.images[0]) || (selectedProduct.image && selectedProduct.image[0]) || '/placeholder.jpg'} 
+                        alt={selectedProduct.name} 
+                        className="w-16 h-16 object-cover rounded-xl border border-gray-200 shadow-2xs"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                            {selectedProduct.category}
+                          </span>
+                          {selectedProduct.outOfStock ? (
+                            <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">Out of Stock</span>
+                          ) : (
+                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">In Stock</span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900 mt-1">{selectedProduct.name}</h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">{selectedProduct.description}</p>
+                      </div>
+                    </div>
+
+                    {/* Quick Edit Section */}
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                        <span>✏️ Quick Edit Price & Color Variants</span>
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Edit Price */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">Price ({currency})</label>
+                          <input
+                            type="number"
+                            value={editPrice}
+                            onChange={(e) => setEditPrice(e.target.value)}
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-black"
+                            placeholder="Price"
+                          />
+                        </div>
+
+                        {/* Edit Discount */}
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">Discount (%)</label>
+                          <input
+                            type="number"
+                            value={editDiscount}
+                            onChange={(e) => setEditDiscount(e.target.value)}
+                            min="0"
+                            max="100"
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-red-600 focus:outline-none focus:ring-2 focus:ring-black"
+                            placeholder="Discount %"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Edit Colors / Variants */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Color Variants</label>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {editColors.length === 0 ? (
+                            <span className="text-xs text-gray-400 italic">No colors specified</span>
+                          ) : (
+                            editColors.map((col, i) => (
+                              <span key={i} className="inline-flex items-center gap-1 bg-black text-white text-xs px-2.5 py-1 rounded-full">
+                                {col}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveModalColor(col)}
+                                  className="hover:text-red-300 font-bold text-xs ml-1"
+                                >
+                                  ✕
+                                </button>
                               </span>
-                            ) : (
-                              <span className="text-xs text-gray-400">None</span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <button
-                              onClick={() => handleRemoveProduct(item._id)}
-                              className="text-xs text-red-600 hover:text-red-800 font-semibold px-2 py-1 rounded hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            ))
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newColorInput}
+                            onChange={(e) => setNewColorInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddModalColor())}
+                            placeholder="e.g. Matte Black"
+                            className="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-black"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddModalColor}
+                            className="bg-gray-800 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg transition"
+                          >
+                            + Add Color
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleSaveChanges}
+                          disabled={isUpdating}
+                          className="bg-black hover:bg-gray-800 text-white font-bold text-xs px-5 py-2 rounded-xl transition shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
+                        >
+                          {isUpdating ? "Saving..." : "💾 Save Changes"}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Customer Reviews Section */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between border-b pb-2">
+                        <h4 className="font-bold text-sm text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                          <span>💬 Customer Reviews ({selectedProduct.reviews?.length || 0})</span>
+                        </h4>
+                        <span className="text-[10px] text-gray-500 italic">
+                          *ইউজার নিজে ওয়েবসাইট থেকে তার কমেন্ট রিমুভ করতে পারবেন
+                        </span>
+                      </div>
+
+                      {(!selectedProduct.reviews || selectedProduct.reviews.length === 0) ? (
+                        <p className="text-xs text-gray-400 italic py-2">No customer comments yet on this product.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {selectedProduct.reviews.map((rev, i) => (
+                            <div key={rev._id || i} className="bg-gray-50 p-3 rounded-lg border border-gray-200 flex items-start justify-between gap-3 text-xs">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-gray-900">{rev.userName || rev.name || 'Customer'}</span>
+                                  <span className="text-amber-500 font-bold">★ {rev.rating || 5}</span>
+                                </div>
+                                <p className="text-xs text-gray-700 mt-0.5">{rev.comment}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="pt-3 border-t flex justify-end">
+                      <button
+                        onClick={() => setSelectedProduct(null)}
+                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs rounded-xl transition cursor-pointer"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1006,12 +1356,16 @@ const AdminPortal = () => {
           {activeTab === 'orders' && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-gray-900">Customer Orders</h2>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Customer Orders</h2>
+                  <p className="text-xs text-gray-400">Manage real-time order processing, fraud rejections &amp; cancellations.</p>
+                </div>
                 <button
                   onClick={fetchOrders}
-                  className="text-xs text-gray-500 hover:text-black font-medium"
+                  className="text-xs text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 cursor-pointer"
                 >
-                  Refresh
+                  <span>🔄</span>
+                  <span>Refresh Orders</span>
                 </button>
               </div>
               {loadingOrders ? (
@@ -1024,6 +1378,14 @@ const AdminPortal = () => {
                     const isCancelled = ord.status === 'Cancelled' || ord.status?.startsWith('Cancelled');
                     const isDelivered = ord.status === 'Delivered';
 
+                    // Compute normalized select value so dropdown NEVER falls back to 'Order Placed'
+                    let selectStatus = ord.status || 'Order Placed';
+                    if (selectStatus.includes('Fraud') || selectStatus.includes('Risk') || selectStatus.includes('Suspected')) {
+                      selectStatus = 'Cancelled (Fraud)';
+                    } else if (selectStatus.startsWith('Cancelled')) {
+                      selectStatus = 'Cancelled';
+                    }
+
                     return (
                       <div key={ord._id || idx} className={`p-4 border rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition ${isCancelled ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-gray-200'}`}>
                         <div className="space-y-1 text-xs text-gray-600">
@@ -1033,7 +1395,7 @@ const AdminPortal = () => {
                             </p>
                             {isCancelled && (
                               <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300">
-                                Cancelled / Rejected
+                                🚫 {selectStatus === 'Cancelled (Fraud)' ? 'Cancelled (Fraud / Suspected)' : 'Cancelled (Customer Request)'}
                               </span>
                             )}
                           </div>
@@ -1069,7 +1431,7 @@ const AdminPortal = () => {
 
                           {!isCancelled && !isDelivered && (
                             <button
-                              onClick={() => handleStatusChange(ord._id, 'Cancelled (Fraud / Suspected)')}
+                              onClick={() => handleStatusChange(ord._id, 'Cancelled (Fraud)', 'Cancelled by Admin (Risk/Fraud Inspection)')}
                               className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1"
                               title="Cancel or reject fraud order"
                             >
@@ -1078,7 +1440,7 @@ const AdminPortal = () => {
                           )}
 
                           <select
-                            value={ord.status || 'Order Placed'}
+                            value={selectStatus}
                             onChange={(e) => handleStatusChange(ord._id, e.target.value)}
                             className={`border rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-black bg-white cursor-pointer ${
                               isCancelled ? 'border-rose-300 text-rose-700 font-bold bg-rose-50/80' : 'border-gray-300 text-gray-900'
@@ -1357,6 +1719,13 @@ const AdminPortal = () => {
                                   >
                                     💬 Chat
                                   </button>
+                                  <button
+                                    onClick={() => handleDeleteUser(user._id, user.email, user.name)}
+                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold rounded-lg border border-rose-200 transition cursor-pointer"
+                                    title="Remove user account (they can re-register with this Gmail later)"
+                                  >
+                                    🗑️ Remove
+                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -1433,10 +1802,16 @@ const AdminPortal = () => {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                      <p className="text-[10px] text-gray-400 italic">
-                        🔒 Read-only view.
-                      </p>
+                    <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(selectedUserForModal._id, selectedUserForModal.email, selectedUserForModal.name)}
+                        className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl border border-rose-200 transition cursor-pointer flex items-center gap-1.5"
+                        title="Delete account permanently. User can re-register with this Gmail later."
+                      >
+                        <span>🗑️</span>
+                        <span>Remove User Account</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => setSelectedUserForModal(null)}

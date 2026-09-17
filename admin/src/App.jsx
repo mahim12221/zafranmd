@@ -28,7 +28,7 @@ const App = () => {
         <Login setToken={setToken} />
       ) : (
         <>
-          <NavBar setToken={setToken} />
+          <NavBar token={token} setToken={setToken} />
           <hr />
           <div className="flex w-full">
             <Sidebar />

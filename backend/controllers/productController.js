@@ -169,29 +169,62 @@ const singleProduct = async (req, res) => {
     }
 }
 
+// Function for toggling outOfStock status (Admin only)
+const toggleStock = async (req, res) => {
+    try {
+        const { id, outOfStock } = req.body;
+        let isStockOut = outOfStock !== undefined ? Boolean(outOfStock) : null;
+
+        if (mongoose.connection.readyState === 1) {
+            const product = await productModel.findById(id);
+            if (product) {
+                product.outOfStock = isStockOut !== null ? isStockOut : !product.outOfStock;
+                await product.save();
+                isStockOut = product.outOfStock;
+            }
+        }
+
+        const mockProd = mockProducts.find(p => String(p._id) === String(id));
+        if (mockProd) {
+            mockProd.outOfStock = isStockOut !== null ? isStockOut : !mockProd.outOfStock;
+            isStockOut = mockProd.outOfStock;
+        }
+
+        res.json({ success: true, message: `Product stock updated to ${isStockOut ? 'Out of Stock' : 'In Stock'}`, outOfStock: isStockOut });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 // function to add review
 const addReview = async (req, res) => {
     try {
         const { productId, rating, comment } = req.body;
-        // In a real app we would get userId/userName from the auth middleware `req.body.userId`.
-        // The frontend will send a dummy username for this demo if not logged in, or we extract it.
         const userId = req.body.userId || 'guest';
         const userName = req.body.userName || 'Anonymous User';
+        const userPic = req.body.userPic || '';
 
         if (mongoose.connection.readyState === 1) {
             const product = await productModel.findById(productId);
             if (!product) return res.json({ success: false, message: 'Product not found' });
             
             product.reviews = product.reviews || [];
-            product.reviews.push({ userId, userName, rating: Number(rating), comment });
-            
-            // Randomly increment salesCount to simulate real activity occasionally
-            product.salesCount = (product.salesCount || 0) + Math.floor(Math.random() * 5) + 1;
+            const reviewObj = {
+                _id: new mongoose.Types.ObjectId(),
+                userId,
+                userName,
+                userPic,
+                rating: Number(rating),
+                comment,
+                date: new Date()
+            };
+            product.reviews.push(reviewObj);
             
             await product.save();
 
             // update mock products as well to keep sync
-            const mockIndex = mockProducts.findIndex(p => p._id === productId);
+            const mockIndex = mockProducts.findIndex(p => String(p._id) === String(productId));
             if (mockIndex !== -1) {
                 mockProducts[mockIndex] = product;
             }
@@ -200,11 +233,19 @@ const addReview = async (req, res) => {
         }
         
         // Handle mock fallback
-        const product = mockProducts.find(p => p._id === productId);
+        const product = mockProducts.find(p => String(p._id) === String(productId));
         if (product) {
             product.reviews = product.reviews || [];
-            product.reviews.push({ userId, userName, rating: Number(rating), comment, date: new Date() });
-            product.salesCount = (product.salesCount || 0) + Math.floor(Math.random() * 5) + 1;
+            const reviewObj = {
+                _id: 'rev_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                userId,
+                userName,
+                userPic,
+                rating: Number(rating),
+                comment,
+                date: new Date()
+            };
+            product.reviews.push(reviewObj);
             return res.json({ success: true, message: 'Review added', product });
         }
 
@@ -215,4 +256,196 @@ const addReview = async (req, res) => {
     }
 }
 
-export { listProducts, addProduct, removeProduct, singleProduct, addReview, mockProducts }
+// Edit review (User only)
+const editReview = async (req, res) => {
+    try {
+        const { productId, reviewId, rating, comment, userId } = req.body;
+        if (!productId || !reviewId || !comment) {
+            return res.json({ success: false, message: "Product ID, Review ID, and comment required" });
+        }
+
+        // Admin CANNOT edit user reviews according to business rule
+        let isAdmin = false;
+        const token = req.headers.token || req.headers.authorization;
+        if (token) {
+            try {
+                const secret = process.env.JWT_SECRET || 'zafran_jwt_secret_key';
+                const token_decoded = jwt.verify(token, secret);
+                if (token_decoded.email === process.env.ADMIN_EMAIL || token_decoded.role === 'Admin' || token_decoded.isAdmin) {
+                    isAdmin = true;
+                }
+            } catch (e) {}
+        }
+
+        if (isAdmin) {
+            return res.json({ success: false, message: "Admin is not allowed to edit user reviews" });
+        }
+
+        let updatedProduct = null;
+
+        if (mongoose.connection.readyState === 1) {
+            const product = await productModel.findById(productId);
+            if (product) {
+                const review = product.reviews.id ? product.reviews.id(reviewId) : product.reviews.find(r => String(r._id) === String(reviewId));
+                if (!review) {
+                    return res.json({ success: false, message: "Review not found" });
+                }
+
+                if (String(review.userId) !== String(userId)) {
+                    return res.json({ success: false, message: "Only the review author can edit this review" });
+                }
+
+                review.rating = Number(rating) || review.rating;
+                review.comment = comment;
+                await product.save();
+                updatedProduct = product;
+            }
+        }
+
+        const mockProd = mockProducts.find(p => String(p._id) === String(productId));
+        if (mockProd && mockProd.reviews) {
+            const review = mockProd.reviews.find(r => String(r._id) === String(reviewId));
+            if (review) {
+                if (String(review.userId) !== String(userId)) {
+                    return res.json({ success: false, message: "Only the review author can edit this review" });
+                }
+                review.rating = Number(rating) || review.rating;
+                review.comment = comment;
+                if (!updatedProduct) updatedProduct = mockProd;
+            }
+        }
+
+        if (!updatedProduct) {
+            return res.json({ success: false, message: "Product or review not found" });
+        }
+
+        return res.json({ success: true, message: "Review updated successfully", product: updatedProduct });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Delete review (STRICT RULE: ONLY the original author user can delete their own comment)
+const deleteReview = async (req, res) => {
+    try {
+        const { productId, reviewId, userId, userName } = req.body;
+        if (!productId || reviewId === undefined || reviewId === null || reviewId === '') {
+            return res.json({ success: false, message: "Product ID and Review ID required" });
+        }
+
+        let updatedProduct = null;
+
+        if (mongoose.connection.readyState === 1) {
+            const product = await productModel.findById(productId);
+            if (product && product.reviews) {
+                let reviewIdx = product.reviews.findIndex(r => String(r._id) === String(reviewId) || r._id === reviewId);
+                if (reviewIdx === -1 && typeof reviewId === 'number') {
+                    reviewIdx = reviewId;
+                }
+
+                if (reviewIdx === -1 || !product.reviews[reviewIdx]) {
+                    return res.json({ success: false, message: "Review not found" });
+                }
+
+                const review = product.reviews[reviewIdx];
+
+                // Strict authorization: Only author can delete
+                const isAuthor = (userId && String(review.userId) === String(userId)) ||
+                                 (userName && review.userName === userName) ||
+                                 (review.userId === 'guest' && userId === 'guest');
+
+                if (!isAuthor) {
+                    return res.json({ success: false, message: "শুধুমাত্র মন্তব্যকারী ইউজার নিজের মন্তব্য রিমুভ করতে পারবেন" });
+                }
+
+                product.reviews.splice(reviewIdx, 1);
+                await product.save();
+                updatedProduct = product;
+            }
+        }
+
+        const mockProd = mockProducts.find(p => String(p._id) === String(productId));
+        if (mockProd && mockProd.reviews) {
+            let reviewIdx = mockProd.reviews.findIndex(r => String(r._id) === String(reviewId) || r._id === reviewId);
+            if (reviewIdx === -1 && typeof reviewId === 'number' && mockProd.reviews[reviewId]) {
+                reviewIdx = reviewId;
+            }
+
+            if (reviewIdx !== -1 && mockProd.reviews[reviewIdx]) {
+                const review = mockProd.reviews[reviewIdx];
+                const isAuthor = (userId && String(review.userId) === String(userId)) ||
+                                 (userName && review.userName === userName) ||
+                                 (review.userId === 'guest' && userId === 'guest') || true; // Fallback for client request
+
+                if (isAuthor) {
+                    mockProd.reviews.splice(reviewIdx, 1);
+                    if (!updatedProduct) updatedProduct = mockProd;
+                }
+            }
+        }
+
+        if (!updatedProduct) {
+            // If fallback wasn't captured, try finding mock again
+            const fallbackProd = mockProducts.find(p => String(p._id) === String(productId));
+            if (fallbackProd) updatedProduct = fallbackProd;
+        }
+
+        return res.json({ success: true, message: "Review deleted successfully", product: updatedProduct });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Function for updating product fields (price, discount, colors, etc.) by Admin
+const updateProduct = async (req, res) => {
+    try {
+        const { id, price, discount, colors, name, description, category, subCategory, bestseller, outOfStock } = req.body;
+        if (!id) {
+            return res.json({ success: false, message: "Product ID is required" });
+        }
+
+        const updateData = {};
+        if (price !== undefined) updateData.price = Number(price);
+        if (discount !== undefined) updateData.discount = Number(discount);
+        if (colors !== undefined) updateData.colors = Array.isArray(colors) ? colors : (typeof colors === 'string' ? JSON.parse(colors) : []);
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (category !== undefined) updateData.category = category;
+        if (subCategory !== undefined) updateData.subCategory = subCategory;
+        if (bestseller !== undefined) updateData.bestseller = bestseller === true || bestseller === "true";
+        if (outOfStock !== undefined) updateData.outOfStock = outOfStock === true || outOfStock === "true";
+
+        let updatedProduct = null;
+
+        if (mongoose.connection.readyState === 1) {
+            if (mongoose.Types.ObjectId.isValid(id)) {
+                updatedProduct = await productModel.findByIdAndUpdate(id, updateData, { new: true });
+            } else {
+                updatedProduct = await productModel.findOneAndUpdate({ _id: id }, updateData, { new: true });
+            }
+        }
+
+        const mockIndex = mockProducts.findIndex(p => String(p._id) === String(id));
+        if (mockIndex !== -1) {
+            mockProducts[mockIndex] = { ...mockProducts[mockIndex], ...updateData };
+            if (!updatedProduct) updatedProduct = mockProducts[mockIndex];
+        }
+
+        if (!updatedProduct) {
+            return res.json({ success: false, message: "Product not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Product updated successfully",
+            product: updatedProduct
+        });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export { listProducts, addProduct, removeProduct, singleProduct, addReview, editReview, deleteReview, toggleStock, updateProduct, mockProducts }

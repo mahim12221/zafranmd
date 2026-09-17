@@ -19,6 +19,7 @@ const productSchema = new mongoose.Schema({
     sizes: { type: Array, required: true },
     colors: { type: Array, default: [] },
     bestseller: { type: Boolean, default: false },
+    outOfStock: { type: Boolean, default: false },
     date: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     salesCount: { type: Number, default: 0 },

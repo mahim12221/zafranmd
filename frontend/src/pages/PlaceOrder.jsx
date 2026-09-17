@@ -20,7 +20,7 @@ const bdDistricts = {
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
-  const { backendUrl, token, cartItems, setCartItems, clearCart, getCartAmount, delivery_fee, products } = useContext(ShopContext);
+  const { backendUrl, token, cartItems, setCartItems, clearCart, getCartAmount, deliveryFeeDhaka, deliveryFeeOutside, userData, products } = useContext(ShopContext);
   const [method, setMethod] = useState('cod');
 
   useEffect(() => {
@@ -40,6 +40,32 @@ const PlaceOrder = () => {
     upazila: '',
     detailedAddress: ''
   });
+
+  // Auto-fill logged in user profile data
+  useEffect(() => {
+    if (userData) {
+      let fName = '';
+      let lName = '';
+      if (userData.name) {
+        const parts = userData.name.trim().split(' ');
+        fName = parts[0] || '';
+        lName = parts.slice(1).join(' ') || '';
+      }
+      setFormData(prev => ({
+        ...prev,
+        firstName: prev.firstName || fName,
+        lastName: prev.lastName || lName,
+        email: prev.email || userData.email || '',
+        phone: prev.phone || userData.phone || '',
+        detailedAddress: prev.detailedAddress || userData.address || ''
+      }));
+    }
+  }, [userData]);
+
+  // Calculate dynamic delivery fee based on District
+  const calculatedDeliveryFee = (formData.district === 'Dhaka' || formData.district === 'ঢাকা') 
+    ? (deliveryFeeDhaka || 60) 
+    : (formData.district ? (deliveryFeeOutside || 120) : (deliveryFeeDhaka || 60));
 
   const onChangeHandler = (event) => {
     const { name, value } = event.target;
@@ -84,7 +110,8 @@ const PlaceOrder = () => {
       let orderData = {
         address: formData,
         items: orderItems,
-        amount: getCartAmount() + delivery_fee
+        amount: getCartAmount() + calculatedDeliveryFee,
+        deliveryFee: calculatedDeliveryFee
       };
 
       switch (method) {
@@ -115,6 +142,13 @@ const PlaceOrder = () => {
         <div className='text-xl sm:text-2xl my-2'>
           <Title text1={'DELIVERY'} text2={'INFORMATION'} />
         </div>
+
+        {userData && (
+          <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2.5 text-xs text-emerald-800 font-medium">
+            <span className="text-base">👤</span>
+            <span>লগইন করা প্রোফাইল (<b>{userData.name}</b>) থেকে আপনার তথ্যসমূহ স্বয়ংক্রিয়ভাবে প্রদান করা হয়েছে। প্রয়োজনে পরিবর্তন করতে পারেন।</span>
+          </div>
+        )}
         
         <div className='grid grid-cols-2 gap-3'>
           <div>
@@ -168,6 +202,27 @@ const PlaceOrder = () => {
             </div>
           </div>
         </div>
+
+        {/* Dynamic Delivery Charge Status Notice */}
+        <div className="bg-gray-100/80 rounded-xl p-3 border border-gray-200/70 text-xs flex items-center justify-between font-medium">
+          <span className="text-gray-600 flex items-center gap-1.5">
+            <span>🚚</span>
+            <span>ডেলিভারি চার্জ:</span>
+          </span>
+          {formData.district === 'Dhaka' || formData.district === 'ঢাকা' ? (
+            <span className="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg">
+              ঢাকা জেলা (৳{deliveryFeeDhaka || 60})
+            </span>
+          ) : formData.district ? (
+            <span className="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-lg">
+              ঢাকার বাইরে (৳{deliveryFeeOutside || 120})
+            </span>
+          ) : (
+            <span className="text-gray-500 font-normal">
+              জেলা সিলেক্ট করুন (ঢাকা: ৳৬ও / বাইরে: ৳১২০)
+            </span>
+          )}
+        </div>
         
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-1.5">Upazila / Thana</label>
@@ -182,7 +237,7 @@ const PlaceOrder = () => {
 
       <div className='mt-4 sm:mt-0 flex-1 max-w-[450px]'>
         <div className='min-w-80'>
-          <CartTotal />
+          <CartTotal deliveryFee={calculatedDeliveryFee} />
         </div>
 
         <div className='mt-10'>

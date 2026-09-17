@@ -30,22 +30,44 @@ const userSocketMap = new Map();
 
 io.on('connection', (socket) => {
   socket.on('register', (userId) => {
-    userSocketMap.set(userId, socket.id);
+    if (userId) {
+      const uId = String(userId);
+      socket.join(uId);
+      userSocketMap.set(uId, socket.id);
+      if (uId === 'admin') {
+        socket.join('admin');
+      }
+    }
   });
+
   socket.on('sendMessage', (messageData) => {
-    const receiverSocketId = userSocketMap.get(messageData.receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('receiveMessage', messageData);
+    if (!messageData) return;
+    const receiverId = String(messageData.receiverId);
+    const senderId = String(messageData.senderId);
+
+    if (receiverId === 'admin') {
+      io.to('admin').emit('receiveMessage', messageData);
+    } else {
+      io.to(receiverId).emit('receiveMessage', messageData);
+    }
+
+    if (senderId === 'admin') {
+      io.to('admin').emit('receiveMessage', messageData);
+    } else {
+      io.to(senderId).emit('receiveMessage', messageData);
     }
   });
-  
+
   socket.on('messageAction', (actionData) => {
-    // actionData: { action: 'delete' | 'edit' | 'deleteConv', receiverId, payload }
-    const receiverSocketId = userSocketMap.get(actionData.receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('messageAction', actionData);
+    if (!actionData) return;
+    const receiverId = String(actionData.receiverId);
+    if (receiverId === 'admin') {
+      io.to('admin').emit('messageAction', actionData);
+    } else {
+      io.to(receiverId).emit('messageAction', actionData);
     }
   });
+
   socket.on('disconnect', () => {
     for (let [userId, socketId] of userSocketMap.entries()) {
       if (socketId === socket.id) {

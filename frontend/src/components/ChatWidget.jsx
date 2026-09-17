@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import ImageViewerModal from './ImageViewerModal';
 
 const ChatWidget = () => {
-  const { token, backendUrl } = useContext(ShopContext);
+  const { token, backendUrl, userData } = useContext(ShopContext);
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -20,6 +20,7 @@ const ChatWidget = () => {
   const [hasUnread, setHasUnread] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
   const [previewImage, setPreviewImage] = useState(null);
+  const touchTimerRef = useRef(null);
 
   useEffect(() => {
     const handleClick = () => setContextMenu({ visible: false, x: 0, y: 0, msg: null });
@@ -30,7 +31,35 @@ const ChatWidget = () => {
   const handleContextMenu = (e, msg) => {
     if (msg.senderId !== userId) return;
     e.preventDefault();
-    setContextMenu({ visible: true, x: e.clientX, y: e.clientY, msg });
+    setContextMenu({ 
+      visible: true, 
+      x: Math.min(e.clientX, window.innerWidth - 140), 
+      y: Math.min(e.clientY, window.innerHeight - 100), 
+      msg 
+    });
+  };
+
+  const handleTouchStart = (e, msg) => {
+    if (msg.senderId !== userId) return;
+    const touch = e.touches[0];
+    const posX = touch.clientX;
+    const posY = touch.clientY;
+    
+    touchTimerRef.current = setTimeout(() => {
+      setContextMenu({
+        visible: true,
+        x: Math.min(posX, window.innerWidth - 140),
+        y: Math.min(posY, window.innerHeight - 100),
+        msg
+      });
+    }, 450);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
   };
 
   const scrollToBottom = (smooth = true) => {
@@ -66,7 +95,10 @@ const ChatWidget = () => {
       });
 
       newSocket.on('receiveMessage', (message) => {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => {
+          if (prev.some(m => m._id === message._id)) return prev;
+          return [...prev, message];
+        });
         // Show notification if closed
         if (!isOpen) {
           toast.info(`New message from Admin`);
@@ -89,15 +121,21 @@ const ChatWidget = () => {
     }
   }, [userId, backendUrl, isOpen]);
 
+  // Polling fallback to ensure messages are updated in real-time even if socket drops
   useEffect(() => {
     if (isOpen && userId) {
-      axios.get(`${backendUrl}/api/chat/messages/${userId}/admin`)
-        .then(res => {
-          if (res.data.success) {
-            setMessages(res.data.messages);
-            setTimeout(() => scrollToBottom(false), 50);
-          }
-        }).catch(err => console.log(err));
+      const fetchMsgList = () => {
+        axios.get(`${backendUrl}/api/chat/messages/${userId}/admin`)
+          .then(res => {
+            if (res.data.success) {
+              setMessages(res.data.messages || []);
+            }
+          }).catch(err => console.log(err));
+      };
+
+      fetchMsgList();
+      const interval = setInterval(fetchMsgList, 3000);
+      return () => clearInterval(interval);
     }
   }, [isOpen, userId, backendUrl]);
 
@@ -196,9 +234,24 @@ const ChatWidget = () => {
     <div className="fixed bottom-5 right-5 z-50">
       {isOpen ? (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-xl w-80 h-96 flex flex-col overflow-hidden">
-          <div className="bg-black text-white p-4 flex justify-between items-center">
-            <h3 className="font-semibold">Customer Support</h3>
-            <button onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white text-xl leading-none">&times;</button>
+          <div className="bg-black text-white p-3.5 flex justify-between items-center shadow-md">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex-shrink-0">
+                {userData?.profilePic ? (
+                  <img src={userData.profilePic} alt={userData.name} className="w-8 h-8 rounded-full object-cover border border-white/30" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-white/20 text-white font-bold flex items-center justify-center text-xs border border-white/30">
+                    {userData?.name ? userData.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                )}
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-black rounded-full"></span>
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-bold text-xs sm:text-sm text-white truncate leading-tight">{userData?.name || 'Customer Support'}</h3>
+                <p className="text-[10px] text-gray-300 truncate">Zafran Official Support</p>
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white text-xl leading-none px-1 flex-shrink-0 cursor-pointer">&times;</button>
           </div>
           
           <div 
@@ -212,16 +265,44 @@ const ChatWidget = () => {
                 <div 
                   key={index} 
                   onContextMenu={(e) => handleContextMenu(e, msg)}
-                  className={`max-w-[80%] rounded-xl p-2.5 text-sm relative ${msg.senderId === userId ? 'bg-black text-white self-end rounded-br-none cursor-context-menu' : 'bg-gray-200 text-black self-start rounded-bl-none'}`}
+                  onTouchStart={(e) => handleTouchStart(e, msg)}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchMove={handleTouchEnd}
+                  className={`max-w-[82%] rounded-2xl p-2.5 text-xs sm:text-sm relative group ${
+                    msg.senderId === userId 
+                      ? 'bg-black text-white self-end rounded-br-xs shadow-xs select-none' 
+                      : 'bg-white border border-gray-200 text-gray-900 self-start rounded-bl-xs shadow-xs'
+                  }`}
                 >
+                  {/* Touch/hover action menu trigger for user's own messages */}
+                  {msg.senderId === userId && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setContextMenu({
+                          visible: true,
+                          x: Math.min(rect.left, window.innerWidth - 140),
+                          y: Math.min(rect.bottom + 5, window.innerHeight - 100),
+                          msg
+                        });
+                      }}
+                      className="absolute -top-2 -right-1 bg-white border border-gray-200 text-gray-700 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-xs opacity-80 sm:opacity-0 group-hover:opacity-100 transition"
+                      title="Options (Tap to edit/delete)"
+                    >
+                      ⋮
+                    </button>
+                  )}
+
                   {msg.messageType === 'image' && msg.fileUrl ? (
                     <div 
                       onClick={() => setPreviewImage(msg.fileUrl)}
-                      className="relative group cursor-pointer overflow-hidden rounded-lg mb-1 block"
+                      className="relative group/img cursor-pointer overflow-hidden rounded-xl mb-1 block"
                       title="Click to zoom image"
                     >
-                      <img src={msg.fileUrl} alt="attachment" className="rounded-md max-w-full group-hover:scale-105 transition duration-200" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1 text-white text-[11px] font-bold backdrop-blur-[1px] rounded-md">
+                      <img src={msg.fileUrl} alt="attachment" className="rounded-xl max-w-full group-hover/img:scale-105 transition duration-200" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition flex items-center justify-center gap-1 text-white text-[11px] font-bold backdrop-blur-[1px] rounded-xl">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6" />
                         </svg>
@@ -229,7 +310,7 @@ const ChatWidget = () => {
                       </div>
                     </div>
                   ) : null}
-                  {msg.text && <p>{msg.text}</p>}
+                  {msg.text && <p className="leading-relaxed">{msg.text}</p>}
                 </div>
               ))
             )}

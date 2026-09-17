@@ -10,6 +10,7 @@ const orderSchema = new mongoose.Schema({
     payment: { type: Boolean, required: true, default: false},
     date: { type: Date, required: true },
     deliveredDate: { type: Date },
+    cancelledDate: { type: Date },
     cancelReason: { type: String }
 })
 

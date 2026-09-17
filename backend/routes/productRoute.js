@@ -1,8 +1,7 @@
 import express from 'express';
-import { listProducts, addProduct, removeProduct, singleProduct, addReview } from '../controllers/productController.js';
+import { listProducts, addProduct, removeProduct, singleProduct, addReview, editReview, deleteReview, toggleStock, updateProduct } from '../controllers/productController.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
-// We might want an auth middleware for reviews, or just let it pass to allow guests for this demo.
 import authUser from '../middleware/auth.js';
 
 const productRouter = express.Router();
@@ -11,7 +10,11 @@ productRouter.post('/add', adminAuth, upload.fields([{name:'image1', maxCount:1}
 productRouter.get('/list', listProducts);
 productRouter.post('/single', singleProduct);
 productRouter.post('/remove', adminAuth, removeProduct);
-// Allow both authenticated and guest reviews for better UX demo
+productRouter.post('/update', adminAuth, updateProduct);
+productRouter.post('/toggle-stock', adminAuth, toggleStock);
+productRouter.post('/stock', adminAuth, toggleStock);
 productRouter.post('/review', addReview);
+productRouter.post('/review/edit', editReview);
+productRouter.post('/review/delete', deleteReview);
 
 export default productRouter;

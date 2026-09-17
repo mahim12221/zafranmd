@@ -232,7 +232,7 @@ const Collection = () => {
         ) : (
           <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-8'>
             {filterProducts.map((item, index)=>(
-              <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.images || item.image} discount={item.discount} />
+              <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.images || item.image} discount={item.discount} outOfStock={item.outOfStock} salesCount={item.salesCount} />
             ))}
           </div>
         )}
