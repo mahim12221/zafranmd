@@ -1,17 +1,42 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { assets } from '../assets/assets';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 
 const NavBar = () => {
     const [visible, setVisible] = useState(false);
-    const {setShowSearch, getCartCount, navigate, token, setToken, clearCart} = useContext(ShopContext);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const profileMenuRef = useRef(null);
+    const location = useLocation();
+    const { setShowSearch, getCartCount, navigate, token, setToken, clearCart, userData } = useContext(ShopContext);
+
     const logout = () => {
+      setShowProfileMenu(false);
       navigate('/login');
       localStorage.removeItem('token');
       setToken('');
       if (clearCart) clearCart();
     };
+
+    // Close profile dropdown when clicking outside
+    useEffect(() => {
+      const handleOutsideClick = (e) => {
+        if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+          setShowProfileMenu(false);
+        }
+      };
+      document.addEventListener('mousedown', handleOutsideClick);
+      return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, []);
+
+    const handleProfileButtonClick = () => {
+      if (!token) {
+        navigate('/login');
+      } else {
+        setShowProfileMenu(prev => !prev);
+      }
+    };
+
   return (
     <div className="flex items-center justify-between py-5 font-medium">
       {/* Logo */}
@@ -59,15 +84,67 @@ const NavBar = () => {
           alt="Search" 
         />
 
-        <div className="group relative">
-          <img onClick={() => token ? navigate('/profile') : navigate('/login')} className="w-5 cursor-pointer" src={assets.profile_icon} alt="Profile" />
-          {token && <div className="hidden group-hover:block absolute right-0 pt-4 bg-white shadow-md rounded z-20">
-            <div className="flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded">
-              <p onClick={() => navigate('/profile')} className="cursor-pointer hover:text-black">My Profile</p>
-              <p onClick={()=> navigate('/orders')} className="cursor-pointer hover:text-black">Orders</p>
-              <p onClick={logout} className="cursor-pointer hover:text-black">Logout</p>
+        <div className="relative" ref={profileMenuRef}>
+          <button 
+            type="button"
+            onClick={handleProfileButtonClick} 
+            className="flex items-center justify-center cursor-pointer focus:outline-none"
+            title={token ? (userData?.name || "My Account") : "Login / Register"}
+          >
+            {token && userData?.profilePic ? (
+              <img 
+                className="w-8 h-8 rounded-full object-cover border border-gray-300 shadow-xs hover:ring-2 hover:ring-black/10 transition" 
+                src={userData.profilePic} 
+                alt={userData.name || "Profile"} 
+              />
+            ) : (
+              <img 
+                className="w-5 cursor-pointer hover:opacity-75 transition" 
+                src={assets.profile_icon} 
+                alt="Profile" 
+              />
+            )}
+          </button>
+
+          {token && showProfileMenu && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl z-50 overflow-hidden animate-fadeIn">
+              {userData && (
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                  <p className="text-xs font-bold text-gray-900 truncate">{userData.name || 'My Account'}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{userData.email}</p>
+                </div>
+              )}
+              <div className="py-1">
+                <button
+                  onClick={() => { setShowProfileMenu(false); navigate('/profile'); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                  </svg>
+                  My Profile
+                </button>
+                <button
+                  onClick={() => { setShowProfileMenu(false); navigate('/orders'); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                  </svg>
+                  Orders
+                </button>
+                <button
+                  onClick={logout}
+                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition border-t border-gray-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-red-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                  </svg>
+                  Logout
+                </button>
+              </div>
             </div>
-          </div>}
+          )}
         </div>
 
         <Link to="/cart" className="relative">

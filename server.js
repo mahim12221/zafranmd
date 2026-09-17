@@ -10,11 +10,51 @@ import userRouter from './backend/routes/userRoute.js';
 import productRouter from './backend/routes/productRoute.js';
 import cartRouter from './backend/routes/cartRoute.js';
 import orderRouter from './backend/routes/orderRoute.js';
+import chatRouter from './backend/routes/chatRoute.js';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+const userSocketMap = new Map();
+
+io.on('connection', (socket) => {
+  socket.on('register', (userId) => {
+    userSocketMap.set(userId, socket.id);
+  });
+  socket.on('sendMessage', (messageData) => {
+    const receiverSocketId = userSocketMap.get(messageData.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('receiveMessage', messageData);
+    }
+  });
+  
+  socket.on('messageAction', (actionData) => {
+    // actionData: { action: 'delete' | 'edit' | 'deleteConv', receiverId, payload }
+    const receiverSocketId = userSocketMap.get(actionData.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('messageAction', actionData);
+    }
+  });
+  socket.on('disconnect', () => {
+    for (let [userId, socketId] of userSocketMap.entries()) {
+      if (socketId === socket.id) {
+        userSocketMap.delete(userId);
+        break;
+      }
+    }
+  });
+});
 const PORT = process.env.PORT || 3000;
 
 // Connect DB & Cloudinary safely
@@ -38,6 +78,7 @@ app.use('/api/user', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
+app.use('/api/chat', chatRouter);
 
 // Frontend Vite integration
 if (process.env.NODE_ENV !== 'production') {
@@ -60,6 +101,6 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-app.listen(PORT, '0.0.0.0', () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });

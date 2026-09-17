@@ -3,9 +3,10 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
+import AdminChat from '../components/AdminChat';
 
 const AdminPortal = () => {
-  const { backendUrl, currency, getProductsData, setDeliveryFee, fetchDeliverySettings } = useContext(ShopContext);
+  const { backendUrl, currency, getProductsData, setDeliveryFee, fetchDeliverySettings, selectedChatUser, setSelectedChatUser } = useContext(ShopContext);
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
   const [activeTab, setActiveTab] = useState('list'); // 'add', 'list', 'orders', 'settings'
 
@@ -35,12 +36,54 @@ const AdminPortal = () => {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [dbStatus, setDbStatus] = useState('fallback');
 
+  // Users management state
+  const [usersList, setUsersList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [selectedUserForModal, setSelectedUserForModal] = useState(null);
+
   // Delivery charge settings state
   const [adminDeliveryFee, setAdminDeliveryFee] = useState(60);
   const [adminDeliveryFeeDhaka, setAdminDeliveryFeeDhaka] = useState(60);
   const [adminDeliveryFeeOutside, setAdminDeliveryFeeOutside] = useState(120);
   const [adminFreeDelivery, setAdminFreeDelivery] = useState(2000);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Dedicated Admin Profile & Identity State (completely separate from customer user state)
+  const [adminProfile, setAdminProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('zafran_admin_profile');
+      return saved ? JSON.parse(saved) : {
+        name: 'Zafran Super Admin',
+        email: 'admin@zafran.com',
+        role: 'Super Administrator',
+        title: 'Executive Store Manager',
+        phone: '+880 1700-000000',
+        profilePic: '',
+        lastLogin: new Date()
+      };
+    } catch {
+      return {
+        name: 'Zafran Super Admin',
+        email: 'admin@zafran.com',
+        role: 'Super Administrator',
+        title: 'Executive Store Manager',
+        phone: '+880 1700-000000',
+        profilePic: '',
+        lastLogin: new Date()
+      };
+    }
+  });
+
+  const [adminEditForm, setAdminEditForm] = useState({
+    name: 'Zafran Super Admin',
+    title: 'Executive Store Manager',
+    phone: '+880 1700-000000'
+  });
+  const [adminAvatarFile, setAdminAvatarFile] = useState(null);
+  const [adminAvatarPreview, setAdminAvatarPreview] = useState('');
+  const [savingAdminProfile, setSavingAdminProfile] = useState(false);
+  const [showAdminProfileModal, setShowAdminProfileModal] = useState(false);
 
   useEffect(() => {
     axios.get((backendUrl || '') + '/api/health')
@@ -55,10 +98,104 @@ const AdminPortal = () => {
       localStorage.setItem('adminToken', adminToken);
       fetchProducts();
       fetchOrders();
+      fetchUsers();
+      fetchAdminProfile();
     } else {
       localStorage.removeItem('adminToken');
     }
   }, [adminToken]);
+
+  const fetchAdminProfile = async () => {
+    if (!adminToken) return;
+    try {
+      const res = await axios.get((backendUrl || '') + '/api/user/admin/profile', {
+        headers: { token: adminToken }
+      });
+      if (res.data.success && res.data.admin) {
+        setAdminProfile(res.data.admin);
+        setAdminEditForm({
+          name: res.data.admin.name || 'Zafran Super Admin',
+          title: res.data.admin.title || 'Executive Store Manager',
+          phone: res.data.admin.phone || '+880 1700-000000'
+        });
+        localStorage.setItem('zafran_admin_profile', JSON.stringify(res.data.admin));
+      }
+    } catch (err) {
+      console.error('Error fetching admin profile:', err);
+    }
+  };
+
+  const handleSaveAdminProfile = async (e) => {
+    if (e) e.preventDefault();
+    setSavingAdminProfile(true);
+    try {
+      const formData = new FormData();
+      formData.append('name', adminEditForm.name || '');
+      formData.append('title', adminEditForm.title || '');
+      formData.append('phone', adminEditForm.phone || '');
+      if (adminAvatarFile) {
+        formData.append('profilePic', adminAvatarFile);
+      } else if (adminAvatarPreview) {
+        formData.append('profilePic', adminAvatarPreview);
+      } else if (adminProfile.profilePic) {
+        formData.append('profilePic', adminProfile.profilePic);
+      }
+
+      const res = await axios.post((backendUrl || '') + '/api/user/admin/update-profile', formData, {
+        headers: { 
+          token: adminToken,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (res.data.success && res.data.admin) {
+        setAdminProfile(res.data.admin);
+        localStorage.setItem('zafran_admin_profile', JSON.stringify(res.data.admin));
+        toast.success('Admin profile updated successfully!');
+        setAdminAvatarFile(null);
+      } else {
+        const updated = {
+          ...adminProfile,
+          name: adminEditForm.name,
+          title: adminEditForm.title,
+          phone: adminEditForm.phone,
+          profilePic: adminAvatarPreview || adminProfile.profilePic
+        };
+        setAdminProfile(updated);
+        localStorage.setItem('zafran_admin_profile', JSON.stringify(updated));
+        toast.success('Admin profile updated!');
+      }
+    } catch (err) {
+      console.error('Error updating admin profile:', err);
+      const updated = {
+        ...adminProfile,
+        name: adminEditForm.name,
+        title: adminEditForm.title,
+        phone: adminEditForm.phone,
+        profilePic: adminAvatarPreview || adminProfile.profilePic
+      };
+      setAdminProfile(updated);
+      localStorage.setItem('zafran_admin_profile', JSON.stringify(updated));
+      toast.success('Admin profile updated!');
+    } finally {
+      setSavingAdminProfile(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!adminToken) return;
+    setLoadingUsers(true);
+    try {
+      const res = await axios.get((backendUrl || '') + '/api/user/admin/all-users', { headers: { token: adminToken } });
+      if (res.data.success) {
+        setUsersList(res.data.users || []);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -66,6 +203,15 @@ const AdminPortal = () => {
       const response = await axios.post((backendUrl || '') + '/api/user/admin', { email, password });
       if (response.data.success) {
         setAdminToken(response.data.token);
+        if (response.data.admin) {
+          setAdminProfile(response.data.admin);
+          setAdminEditForm({
+            name: response.data.admin.name || 'Zafran Super Admin',
+            title: response.data.admin.title || 'Executive Store Manager',
+            phone: response.data.admin.phone || '+880 1700-000000'
+          });
+          localStorage.setItem('zafran_admin_profile', JSON.stringify(response.data.admin));
+        }
         toast.success('Admin authenticated successfully');
       } else {
         toast.error(response.data.message || 'Invalid credentials');
@@ -167,11 +313,16 @@ const AdminPortal = () => {
     }
   };
 
-  const handleStatusChange = async (orderId, newStatus) => {
+  const handleStatusChange = async (orderId, newStatus, customReason) => {
     try {
-      const res = await axios.post((backendUrl || '') + '/api/order/status', { orderId, status: newStatus }, { headers: { token: adminToken } });
+      let cancelReason = customReason;
+      if ((newStatus === 'Cancelled' || newStatus.startsWith('Cancelled')) && !cancelReason) {
+        cancelReason = window.prompt("Reason for cancellation / rejection (e.g., 'Fraud suspicion', 'User requested', 'Out of stock'):", "Cancelled by Admin (Risk/Fraud Inspection)");
+        if (cancelReason === null) return; // User pressed Cancel
+      }
+      const res = await axios.post((backendUrl || '') + '/api/order/status', { orderId, status: newStatus, cancelReason }, { headers: { token: adminToken } });
       if (res.data.success) {
-        toast.success('Status updated');
+        toast.success(res.data.message || 'Status updated');
         fetchOrders();
       } else {
         toast.error(res.data.message);
@@ -268,126 +419,235 @@ const AdminPortal = () => {
 
   if (!adminToken) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center py-12 px-4">
-        <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-8 max-w-md w-full">
-          <div className="flex items-center justify-between mb-4">
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center py-12 px-4 selection:bg-amber-400 selection:text-black">
+        <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl p-8 max-w-md w-full relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
+          
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Zafran Admin</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Secure Management Portal</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black tracking-widest text-white">ZAFRAN</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                  ADMIN
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Executive Management Portal</p>
             </div>
-            <Link to="/" className="text-xs text-gray-500 hover:text-black font-medium underline">
-              ← Storefront
+            <Link to="/" className="text-xs text-slate-400 hover:text-white transition flex items-center gap-1 font-medium bg-slate-800/80 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700/50">
+              <span>← Storefront</span>
             </Link>
           </div>
-          <form onSubmit={handleAdminLogin} className="space-y-4 mt-6">
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Admin Email</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Admin Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@zafran.com"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black text-sm"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 text-sm placeholder:text-slate-600 transition"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Password</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">Admin Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-black text-sm"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 text-sm placeholder:text-slate-600 transition"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-black text-white py-2.5 rounded-md font-medium text-sm hover:bg-gray-800 transition shadow-sm"
+              className="w-full bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white py-3 rounded-xl font-bold text-sm transition shadow-lg shadow-sky-500/20 active:scale-[0.99] cursor-pointer"
             >
-              Sign In to Admin
+              Sign In to Admin Console
             </button>
           </form>
+
+          <div className="mt-6 pt-5 border-t border-slate-800/80 bg-slate-950/40 -mx-8 -mb-8 p-6 text-xs text-slate-400">
+            <div className="flex items-center justify-between text-[11px] mb-2">
+              <span className="font-semibold text-slate-300">Default Admin Credentials</span>
+              <span className="text-[10px] text-sky-400 font-mono">Development Helper</span>
+            </div>
+            <p className="font-mono text-slate-400 text-[11px] select-all cursor-pointer bg-slate-900/90 p-2 rounded-lg border border-slate-800">
+              Email: <span className="text-sky-300">admin@zafran.com</span><br/>
+              Password: <span className="text-sky-300">admin1234</span>
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="py-6 border-t border-gray-200">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-200">
-        <div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-sky-400 selection:text-black">
+      {/* EXECUTIVE TOP HEADER BAR */}
+      <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded">
-              Admin Mode
-            </span>
-            <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
-              dbStatus === 'mongodb'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${dbStatus === 'mongodb' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-              {dbStatus === 'mongodb' ? 'MongoDB Atlas Connected' : 'Local In-Memory Mode'}
+            {/* Show Admin Profile Avatar in Header instead of yellow Z */}
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-800 border-2 border-sky-400/60 shadow-xs flex items-center justify-center text-sky-300 font-bold text-xs shrink-0">
+              {adminProfile.profilePic ? (
+                <img src={adminProfile.profilePic} alt={adminProfile.name} className="w-full h-full object-cover" />
+              ) : (
+                <span>{adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}</span>
+              )}
+            </div>
+            <span className="text-base sm:text-lg font-black tracking-widest text-white hidden xs:inline">ZAFRAN</span>
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-400/30">
+              ADMIN
             </span>
           </div>
-          <h1 className="text-2xl font-bold mt-1 text-gray-900">Zafran Dashboard</h1>
+
+          <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-slate-800 text-xs">
+            <span className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium ${
+              dbStatus === 'mongodb'
+                ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
+                : 'bg-sky-950/80 text-sky-300 border border-sky-800/60'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${dbStatus === 'mongodb' ? 'bg-emerald-400' : 'bg-sky-400'}`}></span>
+              {dbStatus === 'mongodb' ? 'Atlas Database Connected' : 'In-Memory DB Mode'}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             to="/"
-            className="text-xs px-3 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition"
+            className="text-xs px-2.5 py-1.5 sm:px-3 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 font-medium transition flex items-center gap-1.5"
           >
-            ← Back to Store
+            <span>🌐</span>
+            <span className="hidden sm:inline">Storefront</span>
           </Link>
+
+          {/* DEDICATED ADMIN PROFILE CAPSULE */}
+          <button
+            onClick={() => setActiveTab('admin_profile')}
+            className={`flex items-center gap-2 px-2.5 py-1.5 sm:px-3 rounded-xl border transition text-left cursor-pointer ${
+              activeTab === 'admin_profile'
+                ? 'bg-sky-500/20 border-sky-400/50 text-white'
+                : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700/60 text-slate-200'
+            }`}
+            title="Manage Admin Profile"
+          >
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full overflow-hidden bg-slate-800 text-sky-300 flex items-center justify-center font-bold text-xs shrink-0 border border-sky-400/40 shadow-xs">
+              {adminProfile.profilePic ? (
+                <img src={adminProfile.profilePic} alt={adminProfile.name} className="w-full h-full object-cover" />
+              ) : (
+                <span>{adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}</span>
+              )}
+            </div>
+            <div className="hidden md:block leading-tight">
+              <p className="text-xs font-bold text-slate-100 max-w-[120px] truncate">{adminProfile.name || 'Zafran Admin'}</p>
+              <p className="text-[10px] text-sky-400 font-medium truncate">{adminProfile.title || 'Super Admin'}</p>
+            </div>
+          </button>
+
           <button
             onClick={handleLogout}
-            className="text-xs px-3 py-2 bg-red-50 text-red-600 rounded font-medium hover:bg-red-100 transition"
+            className="text-xs px-2.5 py-1.5 sm:px-3 bg-red-950/60 hover:bg-red-900/70 text-red-300 border border-red-800/50 rounded-lg font-semibold transition flex items-center gap-1"
           >
-            Logout
+            <span>🚪</span>
+            <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="flex flex-col md:flex-row gap-8 mt-6">
-        {/* Sidebar Tabs */}
-        <aside className="w-full md:w-56 flex md:flex-col gap-2">
+      {/* ADMIN MAIN WORKSPACE */}
+      <div className="flex-1 flex flex-col md:flex-row gap-4 sm:gap-6 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto min-w-0">
+        {/* Sidebar Navigation - Responsive Horizontally Scrollable Pills on Mobile */}
+        <aside className="w-full md:w-56 lg:w-60 flex flex-row md:flex-col gap-1.5 shrink-0 p-1.5 sm:p-2 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-xl overflow-x-auto md:overflow-visible no-scrollbar">
           <button
             onClick={() => setActiveTab('list')}
-            className={`flex-1 md:flex-initial text-left px-4 py-3 rounded-lg font-medium text-sm transition ${
-              activeTab === 'list' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-between gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === 'list' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
             }`}
           >
-            All Products ({productsList.length})
+            <span>📦 Products</span>
+            <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'list' ? 'bg-sky-400/25 text-sky-100' : 'bg-slate-800 text-slate-300'}`}>
+              {productsList.length}
+            </span>
           </button>
+
           <button
             onClick={() => setActiveTab('add')}
-            className={`flex-1 md:flex-initial text-left px-4 py-3 rounded-lg font-medium text-sm transition ${
-              activeTab === 'add' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'add' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
             }`}
           >
-            + Add Product
+            ➕ Add Product
           </button>
+
           <button
             onClick={() => { setActiveTab('orders'); fetchOrders(); }}
-            className={`flex-1 md:flex-initial text-left px-4 py-3 rounded-lg font-medium text-sm transition ${
-              activeTab === 'orders' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-between gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === 'orders' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
             }`}
           >
-            Orders ({ordersList.length})
+            <span>📋 Orders</span>
+            <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'orders' ? 'bg-sky-400/25 text-sky-100' : 'bg-slate-800 text-slate-300'}`}>
+              {ordersList.length}
+            </span>
           </button>
+
+          <button
+            onClick={() => { setActiveTab('users'); fetchUsers(); }}
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-between gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === 'users' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+            }`}
+          >
+            <span>👥 Customers</span>
+            <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-bold ${activeTab === 'users' ? 'bg-sky-400/25 text-sky-100' : 'bg-slate-800 text-slate-300'}`}>
+              {usersList.length}
+            </span>
+          </button>
+
           <button
             onClick={() => { setActiveTab('settings'); fetchSettings(); }}
-            className={`flex-1 md:flex-initial text-left px-4 py-3 rounded-lg font-medium text-sm transition ${
-              activeTab === 'settings' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'settings' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
             }`}
           >
-            ⚙️ Delivery Charge
+            🚚 Delivery Rates
+          </button>
+
+          <button
+            onClick={() => { 
+               if (activeTab === 'chat') {
+                  setSelectedChatUser(null);
+               } else {
+                  setActiveTab('chat');
+               }
+            }}
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-between gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === 'chat' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+            }`}
+          >
+            <span>💬 Live Support</span>
+            <span className="bg-sky-400/30 text-sky-200 border border-sky-400/40 text-[10px] px-2 py-0.5 rounded-full font-bold">Chat</span>
+          </button>
+
+          <div className="hidden md:block my-2 border-t border-slate-800/80"></div>
+
+          {/* DEDICATED ADMIN PROFILE TAB IN SIDEBAR */}
+          <button
+            onClick={() => setActiveTab('admin_profile')}
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-between gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === 'admin_profile' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">🛡️ Admin Profile</span>
+            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-sky-400/20 text-sky-300 border border-sky-400/30">Self</span>
           </button>
         </aside>
 
         {/* Content Area */}
-        <main className="flex-1 bg-white border border-gray-200 rounded-xl p-6">
+        <main className="flex-1 bg-white text-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800/50 min-h-[600px]">
           {/* TAB 1: PRODUCT LIST */}
           {activeTab === 'list' && (
             <div>
@@ -760,32 +1020,82 @@ const AdminPortal = () => {
                 <p className="text-sm text-gray-500 py-8 text-center">No orders received yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {ordersList.map((ord, idx) => (
-                    <div key={ord._id || idx} className="p-4 border border-gray-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1 text-xs text-gray-600">
-                        <p className="font-semibold text-sm text-gray-900">
-                          Order #{ord._id ? ord._id.slice(-6).toUpperCase() : idx + 1}
-                        </p>
-                        <p><strong>Customer:</strong> {ord.address?.firstName} {ord.address?.lastName} ({ord.address?.phone})</p>
-                        <p><strong>Address:</strong> {ord.address?.detailedAddress || ord.address?.street}, {ord.address?.upazila || ''} {ord.address?.district}, {ord.address?.division || ord.address?.state}</p>
-                        <p><strong>Items:</strong> {ord.items?.map(i => `${i.name} (x${i.quantity || 1})`).join(', ')}</p>
-                        <p><strong>Total:</strong> <span className="font-semibold text-gray-900">{currency}{ord.amount}</span> ({ord.paymentMethod})</p>
+                  {ordersList.map((ord, idx) => {
+                    const isCancelled = ord.status === 'Cancelled' || ord.status?.startsWith('Cancelled');
+                    const isDelivered = ord.status === 'Delivered';
+
+                    return (
+                      <div key={ord._id || idx} className={`p-4 border rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition ${isCancelled ? 'bg-rose-50/40 border-rose-200' : 'bg-white border-gray-200'}`}>
+                        <div className="space-y-1 text-xs text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-sm text-gray-900">
+                              Order #{ord._id ? ord._id.slice(-6).toUpperCase() : idx + 1}
+                            </p>
+                            {isCancelled && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-300">
+                                Cancelled / Rejected
+                              </span>
+                            )}
+                          </div>
+                          <p><strong>Customer:</strong> {ord.address?.firstName} {ord.address?.lastName} ({ord.address?.phone})</p>
+                          {ord.userId && (
+                            <button
+                              onClick={() => {
+                                setSelectedChatUser(ord.userId);
+                                setActiveTab('chat');
+                              }}
+                              className="text-xs bg-gray-100 hover:bg-gray-200 text-black px-2 py-1 rounded inline-flex items-center gap-1 mt-1 font-medium transition cursor-pointer"
+                            >
+                              💬 Message User
+                            </button>
+                          )}
+                          <p><strong>Address:</strong> {ord.address?.detailedAddress || ord.address?.street}, {ord.address?.upazila || ''} {ord.address?.district}, {ord.address?.division || ord.address?.state}</p>
+                          <p><strong>Items:</strong> {ord.items?.map(i => `${i.name} (x${i.quantity || 1})`).join(', ')}</p>
+                          <p><strong>Total:</strong> <span className="font-semibold text-gray-900">{currency}{ord.amount}</span> ({ord.paymentMethod})</p>
+                          {isCancelled && ord.cancelReason && (
+                            <p className="text-xs text-rose-700 font-semibold bg-rose-100/80 p-1.5 rounded border border-rose-200 mt-1">
+                              Reason: {ord.cancelReason}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 shrink-0">
+                          {isDelivered && (
+                            <div className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              <span>Delivered • Auto-cleans in 8 days to save storage</span>
+                            </div>
+                          )}
+
+                          {!isCancelled && !isDelivered && (
+                            <button
+                              onClick={() => handleStatusChange(ord._id, 'Cancelled (Fraud / Suspected)')}
+                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs rounded-lg transition cursor-pointer flex items-center gap-1"
+                              title="Cancel or reject fraud order"
+                            >
+                              🚫 Reject / Fraud Cancel
+                            </button>
+                          )}
+
+                          <select
+                            value={ord.status || 'Order Placed'}
+                            onChange={(e) => handleStatusChange(ord._id, e.target.value)}
+                            className={`border rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-black bg-white cursor-pointer ${
+                              isCancelled ? 'border-rose-300 text-rose-700 font-bold bg-rose-50/80' : 'border-gray-300 text-gray-900'
+                            }`}
+                          >
+                            <option value="Order Placed">Order Placed</option>
+                            <option value="Packing">Packing</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Out for delivery">Out for delivery</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled (Customer Request)</option>
+                            <option value="Cancelled (Fraud)">Cancelled (Fraud / Risk)</option>
+                          </select>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <select
-                          value={ord.status || 'Order Placed'}
-                          onChange={(e) => handleStatusChange(ord._id, e.target.value)}
-                          className="border border-gray-300 rounded px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-black"
-                        >
-                          <option value="Order Placed">Order Placed</option>
-                          <option value="Packing">Packing</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Out for delivery">Out for delivery</option>
-                          <option value="Delivered">Delivered</option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -901,6 +1211,479 @@ const AdminPortal = () => {
               </form>
             </div>
           )}
+
+          {/* TAB 5: CHAT */}
+          {activeTab === 'chat' && (
+            <AdminChat adminToken={adminToken} ordersList={ordersList} />
+          )}
+
+          {/* TAB 6: USERS & LOGINS (READ-ONLY) */}
+          {activeTab === 'users' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Users & Login Activity</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Track registered customer accounts, session login frequencies, and profile details.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Admin Read-Only Protection
+                  </span>
+                  <button
+                    onClick={fetchUsers}
+                    className="text-xs text-gray-600 hover:text-black font-semibold px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {/* Metric Highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 bg-gray-50/80 border border-gray-200/80 rounded-2xl">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Total Registered Users</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{usersList.length}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Verified customer accounts</p>
+                </div>
+                <div className="p-4 bg-gray-50/80 border border-gray-200/80 rounded-2xl">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Cumulative Logins</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {usersList.reduce((acc, u) => acc + (Number(u.loginCount) || 1), 0)}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Total sessions tracked</p>
+                </div>
+                <div className="p-4 bg-gray-50/80 border border-gray-200/80 rounded-2xl">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Customer Orders Placed</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{ordersList.length}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Across entire store</p>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search user by name, email, or phone number..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  className="bg-transparent text-xs w-full text-gray-900 outline-none placeholder:text-gray-400 font-medium"
+                />
+                {userSearchQuery && (
+                  <button onClick={() => setUserSearchQuery('')} className="text-xs text-gray-400 hover:text-black">
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {/* Users Table */}
+              {loadingUsers ? (
+                <div className="py-12 text-center text-sm text-gray-500 font-medium">Loading registered users...</div>
+              ) : usersList.length === 0 ? (
+                <div className="py-12 text-center text-sm text-gray-500 font-medium">No users found.</div>
+              ) : (
+                <div className="overflow-x-auto border border-gray-200 rounded-2xl">
+                  <table className="w-full text-left text-xs text-gray-600">
+                    <thead className="bg-gray-50 text-[10px] uppercase font-bold text-gray-500 border-b border-gray-200">
+                      <tr>
+                        <th className="py-3 px-4">User</th>
+                        <th className="py-3 px-4">Phone</th>
+                        <th className="py-3 px-4 text-center">Logins</th>
+                        <th className="py-3 px-4">Joined Date</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {usersList
+                        .filter(u => {
+                          if (!userSearchQuery.trim()) return true;
+                          const q = userSearchQuery.toLowerCase();
+                          return (
+                            (u.name && u.name.toLowerCase().includes(q)) ||
+                            (u.email && u.email.toLowerCase().includes(q)) ||
+                            (u.phone && u.phone.toLowerCase().includes(q))
+                          );
+                        })
+                        .map((user) => {
+                          const userOrders = ordersList.filter(o => o.userId === user._id);
+                          return (
+                            <tr key={user._id} className="hover:bg-gray-50/70 transition">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  {user.profilePic ? (
+                                    <img src={user.profilePic} alt={user.name} className="w-9 h-9 rounded-full object-cover border border-gray-200" />
+                                  ) : (
+                                    <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs">
+                                      {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-bold text-gray-900">{user.name || 'Anonymous User'}</p>
+                                    <p className="text-[11px] text-gray-500">{user.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 font-medium text-gray-700">
+                                {user.phone || <span className="text-gray-400 italic">Not set</span>}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-900 font-bold rounded-full text-[11px] border border-gray-200">
+                                  {user.loginCount || 1} logins
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-gray-600 font-medium">
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Registered'}
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => setSelectedUserForModal(user)}
+                                    className="px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg hover:bg-neutral-800 transition active:scale-95 cursor-pointer"
+                                  >
+                                    View Profile (Read-Only)
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (setSelectedChatUser) setSelectedChatUser(user._id);
+                                      setActiveTab('chat');
+                                    }}
+                                    className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-[11px] font-bold rounded-lg transition"
+                                    title="Open Chat with User"
+                                  >
+                                    💬 Chat
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* READ-ONLY USER DETAIL MODAL */}
+              {selectedUserForModal && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
+                  <div className="bg-white rounded-2xl max-w-[92vw] sm:max-w-lg w-full max-h-[88vh] overflow-y-auto p-4 sm:p-6 shadow-2xl border border-sky-100">
+                    <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">🛡️</span>
+                        <div>
+                          <h3 className="font-bold text-base text-gray-900">User Profile Details</h3>
+                          <p className="text-[11px] text-sky-700 font-medium">🔒 Secure Read-Only Admin View</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setSelectedUserForModal(null)}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xl leading-none font-bold flex items-center justify-center transition cursor-pointer"
+                      >
+                        &times;
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col items-center text-center mb-5">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-sky-300 mb-3 shadow-md bg-gray-100 flex items-center justify-center shrink-0">
+                        {selectedUserForModal.profilePic ? (
+                          <img src={selectedUserForModal.profilePic} alt={selectedUserForModal.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-slate-900 text-sky-300 flex items-center justify-center text-3xl font-bold">
+                            {selectedUserForModal.name ? selectedUserForModal.name.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-900">{selectedUserForModal.name || 'Customer'}</h4>
+                      <p className="text-xs text-gray-500 break-all">{selectedUserForModal.email}</p>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-800 border border-sky-200">
+                        Active Verified Member
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 bg-slate-50 rounded-xl flex flex-wrap justify-between items-center gap-1">
+                        <span className="text-gray-500 font-medium">Phone Number</span>
+                        <span className="font-bold text-gray-900">{selectedUserForModal.phone || 'Not provided'}</span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl flex flex-wrap justify-between items-start gap-1">
+                        <span className="text-gray-500 font-medium">Saved Shipping Address</span>
+                        <span className="font-bold text-gray-900 text-right max-w-full sm:max-w-[220px] break-words">{selectedUserForModal.address || 'Not specified'}</span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl flex flex-wrap justify-between items-center gap-1">
+                        <span className="text-gray-500 font-medium">Total Logins Tracked</span>
+                        <span className="font-bold text-gray-900 bg-white px-2.5 py-0.5 rounded-md border border-gray-200">
+                          {selectedUserForModal.loginCount || 1} times
+                        </span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl flex flex-wrap justify-between items-center gap-1">
+                        <span className="text-gray-500 font-medium">Registered Date</span>
+                        <span className="font-bold text-gray-800">
+                          {selectedUserForModal.createdAt ? new Date(selectedUserForModal.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Earlier session'}
+                        </span>
+                      </div>
+                      <div className="p-3 bg-slate-50 rounded-xl flex flex-wrap justify-between items-center gap-1">
+                        <span className="text-gray-500 font-medium">Orders Placed</span>
+                        <span className="font-bold text-gray-900">
+                          {ordersList.filter(o => o.userId === selectedUserForModal._id).length} orders
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                      <p className="text-[10px] text-gray-400 italic">
+                        🔒 Read-only view.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUserForModal(null)}
+                        className="px-5 py-2 bg-slate-900 hover:bg-black text-sky-300 text-xs font-bold rounded-xl transition cursor-pointer"
+                      >
+                        Close Profile
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 7: DEDICATED ADMIN PROFILE & IDENTITY MANAGEMENT */}
+          {activeTab === 'admin_profile' && (
+            <div className="animate-fadeIn max-w-4xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-100 mb-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🛡️</span>
+                    <h2 className="text-xl font-black text-gray-900 tracking-tight">Admin Profile & Identity</h2>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 border border-sky-300">
+                      Isolated Admin Realm
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Manage your administrator credentials, photo avatar, contact title, and executive security access. This profile is completely isolated from regular user accounts.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchAdminProfile}
+                  className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition self-start sm:self-auto cursor-pointer"
+                >
+                  🔄 Refresh Profile
+                </button>
+              </div>
+
+              {/* ADMIN IDENTITY HERO CARD */}
+              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-6 mb-8 shadow-xl border border-slate-700/60 relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-sky-400/10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
+                  {/* Avatar with live preview / hover to change */}
+                  <div className="relative group">
+                    <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-sky-400/50 shadow-2xl bg-slate-950 flex items-center justify-center">
+                      {adminAvatarPreview ? (
+                        <img src={adminAvatarPreview} alt="Admin Avatar Preview" className="w-full h-full object-cover" />
+                      ) : adminProfile.profilePic ? (
+                        <img src={adminProfile.profilePic} alt={adminProfile.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-slate-900 text-sky-300 flex items-center justify-center text-4xl font-black">
+                          {adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}
+                        </div>
+                      )}
+                    </div>
+                    <label 
+                      htmlFor="admin-avatar-upload" 
+                      className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-[11px] font-bold text-sky-300 cursor-pointer text-center p-2"
+                    >
+                      <span>📷 Change Photo</span>
+                    </label>
+                  </div>
+
+                  {/* Admin Details */}
+                  <div className="flex-1 text-center sm:text-left space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <h3 className="text-2xl font-black text-white tracking-tight">{adminProfile.name || 'Zafran Super Admin'}</h3>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-950">
+                        {adminProfile.role || 'Super Admin'}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-sky-300/90">{adminProfile.title || 'Executive Store Manager'}</p>
+                    <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-2">
+                      <span>📧 {adminProfile.email || 'admin@zafran.com'}</span>
+                      <span>•</span>
+                      <span>📞 {adminProfile.phone || '+880 1700-000000'}</span>
+                    </p>
+
+                    <div className="pt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span className="text-[10px] px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 font-medium">
+                        🟢 Active Admin Session
+                      </span>
+                      <span className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60 font-mono">
+                        Security: JWT Bearer
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ADMIN PROFILE EDIT FORM */}
+              <form onSubmit={handleSaveAdminProfile} className="bg-gray-50/80 border border-gray-200/80 rounded-2xl p-6 shadow-xs space-y-6">
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-gray-800 mb-1">Edit Admin Details</h4>
+                  <p className="text-xs text-gray-500">Update your public administrative identity and avatar photo.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Admin Name */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+                      Admin Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={adminEditForm.name}
+                      onChange={(e) => setAdminEditForm(prev => ({ ...prev, name: e.target.value }))}
+                      required
+                      placeholder="e.g. Zafran Super Admin"
+                      className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Admin Title / Role Description */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+                      Executive Title / Designation
+                    </label>
+                    <input
+                      type="text"
+                      value={adminEditForm.title}
+                      onChange={(e) => setAdminEditForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. Executive Store Manager / Head of Operations"
+                      className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Admin Contact Phone */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+                      Admin Contact Phone
+                    </label>
+                    <input
+                      type="text"
+                      value={adminEditForm.phone}
+                      onChange={(e) => setAdminEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+880 1700-000000"
+                      className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+
+                  {/* Admin Email (Locked) */}
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 flex items-center justify-between">
+                      <span>Admin System Email</span>
+                      <span className="text-[10px] text-emerald-600 font-bold">🔒 System Locked</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={adminProfile.email || 'admin@zafran.com'}
+                      disabled
+                      className="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Profile Picture Upload Section */}
+                <div className="pt-2 border-t border-gray-200">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-2">
+                    Admin Profile Picture / Avatar
+                  </label>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <input
+                      type="file"
+                      id="admin-avatar-upload"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setAdminAvatarFile(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setAdminAvatarPreview(reader.result);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="text-xs text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-black file:text-white hover:file:bg-neutral-800 file:cursor-pointer cursor-pointer"
+                    />
+                    
+                    {adminAvatarPreview && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminAvatarFile(null);
+                          setAdminAvatarPreview('');
+                        }}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium underline"
+                      >
+                        Reset Avatar Preview
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2">
+                    Supported formats: PNG, JPG, WEBP. Your custom admin picture is visible across the administrative dashboard header and live support chat.
+                  </p>
+                </div>
+
+                {/* Save Button */}
+                <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-200">
+                  <button
+                    type="submit"
+                    disabled={savingAdminProfile}
+                    className="px-6 py-2.5 bg-black text-white hover:bg-neutral-800 text-xs font-bold rounded-xl transition shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                  >
+                    {savingAdminProfile ? (
+                      <>
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        <span>Saving Admin Profile...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>💾 Save Admin Profile Changes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {/* SECURITY & DATA SEPARATION OVERVIEW */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-emerald-700 text-lg">🛡️</span>
+                    <h5 className="font-bold text-xs uppercase tracking-wider text-emerald-900">Total Data Separation</h5>
+                  </div>
+                  <p className="text-xs text-emerald-800 leading-relaxed">
+                    The admin panel uses a strictly separated authentication realm (`JWT_SECRET` administrative bearer). Regular customer profiles, passwords, and addresses are isolated from admin storage.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-amber-700 text-lg">⚡</span>
+                    <h5 className="font-bold text-xs uppercase tracking-wider text-amber-900">8-Day Auto Storage Saver</h5>
+                  </div>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    Automated background lifecycle cleaner is active. Delivered orders are retained for 8 days for customer order tracking, then safely cleaned up to optimize database capacity.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
     </div>

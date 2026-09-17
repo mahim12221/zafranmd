@@ -8,7 +8,11 @@ const authUser = async (req, res, next) => {
     try {
         const secret = process.env.JWT_SECRET || 'zafran_jwt_secret_key';
         const token_decoded = jwt.verify(token, secret);
+        if (!req.body) {
+            req.body = {};
+        }
         req.body.userId = token_decoded.id;
+        req.userId = token_decoded.id;
         next();
     }
     catch (error) {

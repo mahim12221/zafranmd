@@ -6,6 +6,43 @@ import { mockCarts } from "./cartController.js"
 // In-memory fallback orders
 let mockOrders = [];
 
+// 8 days in milliseconds
+const EIGHT_DAYS_MS = 8 * 24 * 60 * 60 * 1000;
+
+// Helper to clean up delivered orders older than 8 days to save database storage
+const cleanupOldDeliveredOrders = async () => {
+    try {
+        const expiryThreshold = new Date(Date.now() - EIGHT_DAYS_MS);
+        if (mongoose.connection.readyState === 1) {
+            // Delete delivered orders whose deliveredDate or order date is older than 8 days
+            await orderModel.deleteMany({
+                status: 'Delivered',
+                $or: [
+                    { deliveredDate: { $lte: expiryThreshold } },
+                    { deliveredDate: { $exists: false }, date: { $lte: expiryThreshold } }
+                ]
+            });
+        }
+        // Clean up mock fallback orders as well
+        const now = Date.now();
+        mockOrders = mockOrders.filter(o => {
+            if (o.status === 'Delivered') {
+                const deliveredTime = o.deliveredDate ? new Date(o.deliveredDate).getTime() : new Date(o.date).getTime();
+                if (now - deliveredTime >= EIGHT_DAYS_MS) {
+                    return false; // Remove order to free storage
+                }
+            }
+            return true;
+        });
+    } catch (err) {
+        console.log('Error cleaning up old delivered orders:', err.message);
+    }
+};
+
+// Run cleanup periodically every hour
+setInterval(cleanupOldDeliveredOrders, 60 * 60 * 1000);
+
+
 const placeOrder = async (req, res) => {
     try {
         const { userId, items, amount, address} = req.body
@@ -50,6 +87,7 @@ const placeOrderRazorpay = async (req, res) => {
 // All orders data for admin panel
 const allOrders = async (req, res) => {
     try{
+        await cleanupOldDeliveredOrders();
         if (mongoose.connection.readyState === 1) {
             const orders = await orderModel.find({})
             if (orders && orders.length > 0) {
@@ -67,6 +105,7 @@ const allOrders = async (req, res) => {
 // User order data for frontend
 const userOrders = async (req, res) => {
     try{
+        await cleanupOldDeliveredOrders();
         const {userId} = req.body
         if (mongoose.connection.readyState === 1) {
             const orders = await orderModel.find({userId})
@@ -83,18 +122,89 @@ const userOrders = async (req, res) => {
     }
 }
 
+// Cancel order by customer
+const cancelOrderUser = async (req, res) => {
+    try {
+        const { userId, orderId, reason } = req.body;
+        if (!orderId) {
+            return res.json({ success: false, message: "Order ID is required" });
+        }
+
+        let orderFound = false;
+
+        if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(orderId)) {
+            const existingOrder = await orderModel.findById(orderId);
+            if (existingOrder) {
+                if (existingOrder.userId && existingOrder.userId !== userId) {
+                    return res.json({ success: false, message: "Unauthorized to cancel this order" });
+                }
+                if (existingOrder.status === 'Delivered') {
+                    return res.json({ success: false, message: "Delivered orders cannot be cancelled" });
+                }
+                if (existingOrder.status === 'Cancelled' || existingOrder.status?.startsWith('Cancelled')) {
+                    return res.json({ success: false, message: "Order is already cancelled" });
+                }
+                existingOrder.status = 'Cancelled';
+                existingOrder.cancelReason = reason || 'Cancelled by Customer';
+                await existingOrder.save();
+                orderFound = true;
+            }
+        }
+
+        // Also update in mock fallback orders
+        const mockOrder = mockOrders.find(o => o._id === orderId);
+        if (mockOrder) {
+            if (mockOrder.status === 'Delivered') {
+                return res.json({ success: false, message: "Delivered orders cannot be cancelled" });
+            }
+            if (mockOrder.status === 'Cancelled' || mockOrder.status?.startsWith('Cancelled')) {
+                return res.json({ success: false, message: "Order is already cancelled" });
+            }
+            mockOrder.status = 'Cancelled';
+            mockOrder.cancelReason = reason || 'Cancelled by Customer';
+            orderFound = true;
+        }
+
+        if (!orderFound) {
+            return res.json({ success: false, message: "Order not found" });
+        }
+
+        res.json({ success: true, message: "Order cancelled successfully" });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 // Update order status
 const updateStatus = async (req, res) => {
     try{
-        const {orderId, status} = req.body
+        const {orderId, status, cancelReason} = req.body
+        const updateData = { status };
+        if (status === 'Delivered') {
+            updateData.deliveredDate = new Date();
+        }
+        if (cancelReason || status === 'Cancelled' || status?.startsWith('Cancelled')) {
+            updateData.cancelReason = cancelReason || 'Cancelled by Admin';
+        }
+
         if (mongoose.connection.readyState === 1) {
-            await orderModel.findByIdAndUpdate(orderId, {status})
+            if (mongoose.Types.ObjectId.isValid(orderId)) {
+                await orderModel.findByIdAndUpdate(orderId, updateData)
+            }
         }
         const order = mockOrders.find(o => o._id === orderId);
         if (order) {
             order.status = status;
+            if (status === 'Delivered') {
+                order.deliveredDate = new Date();
+            }
+            if (cancelReason || status === 'Cancelled' || status?.startsWith('Cancelled')) {
+                order.cancelReason = cancelReason || 'Cancelled by Admin';
+            }
         }
-        res.json({success: true, message: "Order Status Updated"})
+        await cleanupOldDeliveredOrders();
+        res.json({success: true, message: status === 'Delivered' ? "Order marked as Delivered (auto-cleans after 8 days to save storage)" : status?.startsWith('Cancelled') ? "Order Cancelled / Rejected" : "Order Status Updated"})
     }
     catch (error){
         console.log(error)
@@ -128,4 +238,4 @@ const updateSettings = async (req, res) => {
     }
 };
 
-export {placeOrder, placeOrderRazorpay, placeOrderStripe, allOrders, updateStatus, userOrders, getSettings, updateSettings, mockOrders}
+export {placeOrder, placeOrderRazorpay, placeOrderStripe, allOrders, updateStatus, userOrders, cancelOrderUser, getSettings, updateSettings, mockOrders}
