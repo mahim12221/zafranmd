@@ -246,8 +246,8 @@ const ChatWidget = () => {
                 )}
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border border-black rounded-full"></span>
               </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-xs sm:text-sm text-white truncate leading-tight">{userData?.name || 'Customer Support'}</h3>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-xs sm:text-sm text-white truncate leading-tight max-w-[140px] sm:max-w-[180px]">{userData?.name || 'Customer Support'}</h3>
                 <p className="text-[10px] text-gray-300 truncate">Zafran Official Support</p>
               </div>
             </div>

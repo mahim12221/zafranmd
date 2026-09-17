@@ -17,6 +17,7 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
   const [editingMessage, setEditingMessage] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
   // Sync active user with context
@@ -27,7 +28,10 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
   }, [selectedChatUser]);
 
   useEffect(() => {
-    const handleClick = () => setContextMenu({ visible: false, x: 0, y: 0, msg: null });
+    const handleClick = () => {
+      setContextMenu({ visible: false, x: 0, y: 0, msg: null });
+      setShowHeaderMenu(false);
+    };
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
   }, []);
@@ -359,63 +363,113 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
         {activeUser && activeCustomer ? (
           <>
             {/* Header */}
-            <div className="p-3.5 px-5 border-b border-gray-200 bg-white shadow-xs flex items-center justify-between z-10 shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="p-3 px-4 sm:px-5 border-b border-gray-200 bg-white shadow-2xs flex items-center justify-between z-10 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
                 <button 
+                  type="button"
                   onClick={() => { setActiveUser(null); if (setSelectedChatUser) setSelectedChatUser(null); }} 
-                  className="sm:hidden text-gray-500 hover:text-black mr-1 flex items-center"
+                  className="sm:hidden text-gray-500 hover:text-black shrink-0 p-1 rounded-lg hover:bg-gray-100 transition"
+                  title="Back to conversations"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
                 </button>
 
-                <div className="relative">
+                <div className="relative shrink-0">
                   {activeCustomer.profilePic ? (
-                    <img src={activeCustomer.profilePic} alt={activeCustomer.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                    <img src={activeCustomer.profilePic} alt={activeCustomer.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-gray-200 shadow-2xs" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-sm">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-2xs">
                       {activeCustomer.name ? activeCustomer.name.charAt(0).toUpperCase() : 'C'}
                     </div>
                   )}
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                  <span className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                 </div>
 
-                <div>
-                  <h3 className="font-bold text-sm text-gray-900 truncate max-w-[200px] sm:max-w-xs">{activeCustomer.name}</h3>
-                  <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Active Now {activeCustomer.email ? `• ${activeCustomer.email}` : ''}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-xs sm:text-sm text-gray-900 truncate leading-tight max-w-[110px] xs:max-w-[150px] sm:max-w-xs">{activeCustomer.name}</h3>
+                  <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium flex items-center gap-1 truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="truncate">Active Now {activeCustomer.email ? `• ${activeCustomer.email}` : ''}</span>
                   </p>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <button 
-                  onClick={() => setShowProfileModal(true)}
-                  className="bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                  title="View User Profile (Read Only)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" className="w-4 h-4 text-sky-600">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                  </svg>
-                  <span className="hidden xs:inline">View Profile</span>
-                  <span className="xs:hidden">Profile</span>
-                </button>
+              {/* Actions Dropdown / Popup Menu */}
+              <div className="relative shrink-0 flex items-center gap-1.5">
+                {/* Desktop Buttons */}
+                <div className="hidden sm:flex items-center gap-2">
+                  <button 
+                    type="button"
+                    onClick={() => setShowProfileModal(true)}
+                    className="bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="View User Profile (Read Only)"
+                  >
+                    <span>👤</span>
+                    <span>View Profile</span>
+                  </button>
 
-                <button 
-                  onClick={() => {
-                    const conv = conversations.find(c => c.participants.includes(activeUser));
-                    if (conv) handleDeleteConversation(conv._id);
-                  }} 
-                  className="text-red-600 hover:bg-red-50 p-1.5 sm:p-2 rounded-xl text-xs font-semibold transition cursor-pointer"
-                  title="Delete Entire Conversation"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                  </svg>
-                </button>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const conv = conversations.find(c => c.participants.includes(activeUser));
+                      if (conv) handleDeleteConversation(conv._id);
+                    }} 
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Delete Entire Conversation"
+                  >
+                    <span>🗑️</span>
+                    <span>Delete Chat</span>
+                  </button>
+                </div>
+
+                {/* Mobile Three-Dots Popup Menu Button */}
+                <div className="sm:hidden relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowHeaderMenu(prev => !prev);
+                    }}
+                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-base flex items-center justify-center transition cursor-pointer border border-gray-200 shadow-2xs"
+                    title="Chat menu options"
+                  >
+                    ⋮
+                  </button>
+
+                  {showHeaderMenu && (
+                    <div 
+                      className="absolute right-0 top-10 z-50 bg-white border border-gray-200 shadow-2xl rounded-2xl p-1.5 min-w-[150px] text-xs font-semibold text-gray-800 animate-fadeIn"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileModal(true);
+                          setShowHeaderMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-sky-50 text-sky-900 rounded-xl flex items-center gap-2 cursor-pointer font-bold transition"
+                      >
+                        <span>👤</span>
+                        <span>View Profile</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowHeaderMenu(false);
+                          const conv = conversations.find(c => c.participants.includes(activeUser));
+                          if (conv) handleDeleteConversation(conv._id);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-700 rounded-xl flex items-center gap-2 cursor-pointer font-bold transition"
+                      >
+                        <span>🗑️</span>
+                        <span>Delete Chat</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             
