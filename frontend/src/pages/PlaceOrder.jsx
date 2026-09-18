@@ -25,7 +25,7 @@ const PlaceOrder = () => {
 
   useEffect(() => {
     if (!token && !localStorage.getItem('token')) {
-      toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+      toast.info('Please log in or sign up to complete your order');
       navigate('/login?redirect=/place-order', { replace: true });
     }
   }, [token]);
@@ -80,7 +80,7 @@ const PlaceOrder = () => {
     event.preventDefault();
     const activeToken = token || localStorage.getItem('token');
     if (!activeToken) {
-      toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+      toast.info('Please log in or sign up to complete your order');
       navigate('/login?redirect=/place-order');
       return;
     }
@@ -102,7 +102,7 @@ const PlaceOrder = () => {
       });
       
       if (orderItems.length === 0) {
-        toast.error('আপনার কার্টে কোনো প্রোডাক্ট নেই');
+        toast.error('Your cart is empty');
         navigate('/collection');
         return;
       }
@@ -120,7 +120,7 @@ const PlaceOrder = () => {
           if (response.data.success) {
             if (clearCart) clearCart();
             else setCartItems({});
-            toast.success('আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!');
+            toast.success('Your order has been placed successfully!');
             navigate('/orders');
           } else {
             toast.error(response.data.message);
@@ -146,7 +146,7 @@ const PlaceOrder = () => {
         {userData && (
           <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2.5 text-xs text-emerald-800 font-medium">
             <span className="text-base">👤</span>
-            <span>লগইন করা প্রোফাইল (<b>{userData.name}</b>) থেকে আপনার তথ্যসমূহ স্বয়ংক্রিয়ভাবে প্রদান করা হয়েছে। প্রয়োজনে পরিবর্তন করতে পারেন।</span>
+            <span>Information auto-filled from your profile (<b>{userData.name}</b>). You can edit any field if needed.</span>
           </div>
         )}
         
@@ -207,19 +207,19 @@ const PlaceOrder = () => {
         <div className="bg-gray-100/80 rounded-xl p-3 border border-gray-200/70 text-xs flex items-center justify-between font-medium">
           <span className="text-gray-600 flex items-center gap-1.5">
             <span>🚚</span>
-            <span>ডেলিভারি চার্জ:</span>
+            <span>Delivery Charge:</span>
           </span>
           {formData.district === 'Dhaka' || formData.district === 'ঢাকা' ? (
             <span className="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg">
-              ঢাকা জেলা (৳{deliveryFeeDhaka || 60})
+              Dhaka City ({deliveryFeeDhaka ? `৳${deliveryFeeDhaka}` : '৳60'})
             </span>
           ) : formData.district ? (
             <span className="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-lg">
-              ঢাকার বাইরে (৳{deliveryFeeOutside || 120})
+              Outside Dhaka ({deliveryFeeOutside ? `৳${deliveryFeeOutside}` : '৳120'})
             </span>
           ) : (
             <span className="text-gray-500 font-normal">
-              জেলা সিলেক্ট করুন (ঢাকা: ৳৬ও / বাইরে: ৳১২০)
+              Select District (Dhaka: ৳60 / Outside: ৳120)
             </span>
           )}
         </div>

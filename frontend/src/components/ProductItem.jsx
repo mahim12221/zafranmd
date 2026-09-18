@@ -13,37 +13,72 @@ const ProductItem = ({ id, image, name, price, discount, outOfStock, salesCount 
   const originalPrice = hasDiscount ? Math.round(price / (1 - discountVal / 100)) : price;
 
   return (
-    <Link className='text-gray-700 cursor-pointer group' to={id ? `/product/${id}` : '#'}>
-      <div className='overflow-hidden relative bg-gray-100 rounded'>
-        <img className={`group-hover:scale-110 transition ease-in-out w-full h-48 sm:h-56 object-cover ${outOfStock ? 'opacity-60 grayscale-[30%]' : ''}`} src={productImage} alt={name || "Product"} />
+    <Link 
+      className="group flex flex-col cursor-pointer select-none break-inside-avoid mb-4 sm:mb-5 block w-full" 
+      to={id ? `/product/${id}` : '#'}
+      onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
+    >
+      {/* Product Image Frame */}
+      <div 
+        className="relative overflow-hidden rounded-2xl bg-zinc-100 border border-zinc-200/80 shadow-2xs group-hover:shadow-md transition-all duration-300 w-full"
+      >
+        <img 
+          className={`w-full h-auto block object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${outOfStock ? 'opacity-50 grayscale' : ''}`} 
+          src={productImage} 
+          alt={name || "Kaviro Product"} 
+          loading="lazy"
+        />
         
-        {outOfStock ? (
-          <div className='absolute inset-0 bg-black/30 backdrop-blur-[1px] flex items-center justify-center'>
-            <span className='bg-red-600 text-white text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-md shadow-md tracking-wider'>
-              Out of Stock
+        {/* Floating Badges */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+          {hasDiscount && !outOfStock ? (
+            <span className="bg-zinc-950/90 backdrop-blur-xs text-orange-400 border border-orange-500/30 text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs tracking-wider">
+              {discountVal}% OFF
             </span>
-          </div>
-        ) : (
-          hasDiscount && (
-            <div className='absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm'>
-              -{discountVal}%
-            </div>
-          )
-        )}
-      </div>
-      <p className='pt-3 pb-1 text-sm font-medium text-gray-800 truncate'>{name || "No Name"}</p>
-      <div className='flex items-center justify-between gap-2'>
-        <div className='flex items-center gap-2'>
-          <p className='text-sm font-bold text-black'>{currency}{price}</p>
-          {hasDiscount && (
-            <p className='text-xs text-gray-400 line-through'>{currency}{originalPrice}</p>
+          ) : <span></span>}
+
+          {Number(salesCount) > 0 && !outOfStock && (
+            <span className="bg-white/90 backdrop-blur-xs text-zinc-900 border border-zinc-200 text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
+              🔥 {salesCount} sold
+            </span>
           )}
         </div>
-        {Number(salesCount) > 0 && (
-          <span className='text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200'>
-            🔥 {salesCount} sold
-          </span>
+
+        {outOfStock && (
+          <div className="absolute inset-0 bg-zinc-950/40 backdrop-blur-[2px] flex items-center justify-center p-2">
+            <span className="bg-zinc-900 text-white text-[10px] sm:text-[11px] font-black uppercase px-3 py-1.5 rounded-xl shadow-lg border border-zinc-700 tracking-wider text-center">
+              Sold Out
+            </span>
+          </div>
         )}
+
+        {/* Quick View Hover Bar */}
+        {!outOfStock && (
+          <div className="absolute bottom-2.5 inset-x-2.5 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 pointer-events-none">
+            <div className="bg-white/95 backdrop-blur-md text-zinc-900 text-center py-2 rounded-xl text-[11px] font-bold shadow-lg border border-zinc-100 flex items-center justify-center gap-1.5">
+              <span>View Details</span>
+              <span>→</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Product Details - Docked tightly directly under image */}
+      <div className="pt-2 px-0.5 flex flex-col">
+        <h3 className="text-xs sm:text-sm font-semibold text-zinc-800 group-hover:text-black line-clamp-1 transition-colors">
+          {name || "Untitled Item"}
+        </h3>
+        
+        <div className="flex items-baseline gap-2 mt-0.5">
+          <p className="text-sm sm:text-base font-extrabold text-zinc-950">
+            {currency}{price}
+          </p>
+          {hasDiscount && (
+            <p className="text-xs text-zinc-400 line-through font-normal">
+              {currency}{originalPrice}
+            </p>
+          )}
+        </div>
       </div>
     </Link>
   );

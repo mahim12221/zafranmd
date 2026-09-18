@@ -43,29 +43,45 @@ const NavBar = () => {
       <Link to='/'><img src={assets.logo} className="w-36" alt="Logo" /></Link>
 
       {/* Navigation Links */}
-      <ul className="hidden sm:flex gap-5 text-sm text-gray-700">
+      <ul className="hidden sm:flex items-center gap-7 text-xs md:text-sm font-semibold tracking-wider text-zinc-600">
         <li>
-          <NavLink to="/" className="flex flex-col items-center gap-1">
-            <p>HOME</p>
-            <hr className="w-2/4 border-none h-1.5 bg-gray-700 group-hover:block hidden" />
+          <NavLink 
+            to="/" 
+            className={({ isActive }) => 
+              `transition-colors duration-200 py-1 hover:text-black ${isActive ? 'text-black font-extrabold border-b-2 border-orange-500' : ''}`
+            }
+          >
+            HOME
           </NavLink>
         </li>
         <li>
-          <NavLink to="/collection" className="flex flex-col items-center gap-1">
-            <p>COLLECTION</p>
-            <hr className="w-2/4 border-none h-1.5 bg-gray-700 group-hover:block hidden" />
+          <NavLink 
+            to="/collection" 
+            className={({ isActive }) => 
+              `transition-colors duration-200 py-1 hover:text-black ${isActive ? 'text-black font-extrabold border-b-2 border-orange-500' : ''}`
+            }
+          >
+            COLLECTION
           </NavLink>
         </li>
         <li>
-          <NavLink to="/about" className="flex flex-col items-center gap-1">
-            <p>ABOUT</p>
-            <hr className="w-2/4 border-none h-1.5 bg-gray-700 group-hover:block hidden" />
+          <NavLink 
+            to="/about" 
+            className={({ isActive }) => 
+              `transition-colors duration-200 py-1 hover:text-black ${isActive ? 'text-black font-extrabold border-b-2 border-orange-500' : ''}`
+            }
+          >
+            ABOUT
           </NavLink>
         </li>
         <li>
-          <NavLink to="/contact" className="flex flex-col items-center gap-1">
-            <p>CONTACT</p>
-            <hr className="w-2/4 border-none h-1.5 bg-gray-700 group-hover:block hidden" />
+          <NavLink 
+            to="/contact" 
+            className={({ isActive }) => 
+              `transition-colors duration-200 py-1 hover:text-black ${isActive ? 'text-black font-extrabold border-b-2 border-orange-500' : ''}`
+            }
+          >
+            CONTACT
           </NavLink>
         </li>
       </ul>
@@ -155,18 +171,25 @@ const NavBar = () => {
         </Link>
         <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-5 cursor-pointer sm:hidden' alt="" />
       </div>
-      <div className={`absolute top-0 right-0 bottom-0 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'}`}>
-        <div className="flex flex-col text-gray-600">
-            <div onClick={() => setVisible(false)} className="flex items-center gap-4 p-3">
-            <img src={assets.dropdown_icon} className="h-4 rotate-180" alt="" />
-            <p>Back</p>
+      {/* Mobile Drawer */}
+      <div className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-50 transition-opacity duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute top-0 right-0 bottom-0 w-3/4 max-w-xs bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${visible ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div onClick={() => setVisible(false)} className="flex items-center justify-between p-4 border-b border-gray-100 cursor-pointer">
+            <div className="flex items-center gap-2 text-zinc-800 font-bold text-sm">
+              <img src={assets.dropdown_icon} className="h-4 rotate-180" alt="Back" />
+              <span>Back</span>
             </div>
-            <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to="/">HOME</NavLink>
-            <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to="/collection">COLLECTION</NavLink>
-            <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to="/about">ABOUT</NavLink>
-            <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to="/contact">CONTACT</NavLink>
+            <span className="text-gray-400 text-lg font-bold">✕</span>
+          </div>
+
+          <div className="flex flex-col py-4 px-2 text-sm font-bold tracking-wider text-zinc-700">
+            <NavLink onClick={()=>setVisible(false)} className={({isActive}) => `py-3 px-4 rounded-xl transition ${isActive ? 'bg-zinc-950 text-white' : 'hover:bg-gray-100'}`} to="/">HOME</NavLink>
+            <NavLink onClick={()=>setVisible(false)} className={({isActive}) => `py-3 px-4 rounded-xl transition ${isActive ? 'bg-zinc-950 text-white' : 'hover:bg-gray-100'}`} to="/collection">COLLECTION</NavLink>
+            <NavLink onClick={()=>setVisible(false)} className={({isActive}) => `py-3 px-4 rounded-xl transition ${isActive ? 'bg-zinc-950 text-white' : 'hover:bg-gray-100'}`} to="/about">ABOUT</NavLink>
+            <NavLink onClick={()=>setVisible(false)} className={({isActive}) => `py-3 px-4 rounded-xl transition ${isActive ? 'bg-zinc-950 text-white' : 'hover:bg-gray-100'}`} to="/contact">CONTACT</NavLink>
+          </div>
         </div>
-        </div>
+      </div>
     </div>
   );
 };

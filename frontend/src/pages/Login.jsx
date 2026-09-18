@@ -69,7 +69,7 @@ const Login = () => {
           setToken(newToken);
           localStorage.setItem('token', newToken);
           if (getUserCart) getUserCart(newToken);
-          toast.success('অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!');
+          toast.success('Account created successfully!');
           navigate(redirectUrl, { replace: true });
         } else {
           toast.error(response.data.message);
@@ -81,7 +81,7 @@ const Login = () => {
           setToken(newToken);
           localStorage.setItem('token', newToken);
           if (getUserCart) getUserCart(newToken);
-          toast.success('লগইন সফল হয়েছে!');
+          toast.success('Logged in successfully!');
           navigate(redirectUrl, { replace: true });
         } else {
           toast.error(response.data.message);
@@ -114,9 +114,9 @@ const Login = () => {
               🛍️
             </div>
             <div>
-              <p className="font-semibold text-xs text-gray-900">অর্ডার সম্পন্ন করতে লগইন করুন</p>
+              <p className="font-semibold text-xs text-gray-900">Sign in to complete order</p>
               <p className="text-[11px] text-gray-600 mt-0.5">
-                লগইন বা অ্যাকাউন্ট তৈরি করার সাথে সাথেই আপনাকে আগের অর্ডার পেজে নিয়ে যাওয়া হবে।
+                You will be redirected back to checkout immediately after signing in.
               </p>
             </div>
           </div>
@@ -124,7 +124,7 @@ const Login = () => {
 
         {/* Tab switchers */}
         {currentState !== 'Forgot Password' && (
-<div className="flex bg-gray-100 p-1 rounded-2xl">
+        <div className="flex bg-gray-100 p-1 rounded-2xl">
           <button
             type="button"
             onClick={() => setCurrentState('Login')}
@@ -134,7 +134,7 @@ const Login = () => {
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            Sign In (লগইন)
+            Sign In
           </button>
           <button
             type="button"
@@ -145,7 +145,7 @@ const Login = () => {
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            Create Account (রেজিস্ট্রেশন)
+            Create Account
           </button>
         </div>
         )}

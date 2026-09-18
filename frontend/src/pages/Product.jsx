@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
-import { assets } from '../assets/assets';
+import { assets, products as localCatalog } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -11,6 +11,7 @@ const Product = () => {
   const navigate = useNavigate();
   const { products, currency, addToCart, backendUrl, token, userData } = useContext(ShopContext);
   const [productData, setProductData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
   const [size, setSize] = useState('Standard');
@@ -24,7 +25,15 @@ const Product = () => {
   const isAdmin = Boolean(localStorage.getItem('adminToken') || localStorage.getItem('token') === 'admin_secret_token');
 
   const fetchProductData = async () => {
-    let product = products.find((item) => String(item._id) === String(productId));
+    setLoading(true);
+    // 1. Try finding in Context products
+    let product = (products || []).find((item) => String(item._id) === String(productId));
+    
+    // 2. Fallback to local catalog
+    if (!product) {
+      product = (localCatalog || []).find((item) => String(item._id) === String(productId));
+    }
+
     if (product) {
       setProductData(product);
       setActiveImageIndex(0);
@@ -33,7 +42,12 @@ const Product = () => {
       } else {
         setSelectedColor('');
       }
-    } else if (productId) {
+      setLoading(false);
+      return;
+    }
+
+    // 3. Try backend API
+    if (productId) {
       try {
         const res = await axios.post((backendUrl || '') + '/api/product/single', { productId });
         if (res.data.success && res.data.product) {
@@ -47,6 +61,7 @@ const Product = () => {
         console.error("Error fetching product by ID:", err);
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -181,7 +196,7 @@ const Product = () => {
   const handleAddToCart = () => {
     if (!productData) return;
     if (productData.outOfStock) {
-      toast.error('দুঃখিত, এই প্রোডাক্টটি বর্তমানে স্টকে নেই (Out of Stock)');
+      toast.error('Sorry, this product is currently out of stock');
       return;
     }
     addToCart(productData._id, size || 'Standard', selectedColor);
@@ -190,12 +205,12 @@ const Product = () => {
   const handleOrderNow = async () => {
     if (!productData) return;
     if (productData.outOfStock) {
-      toast.error('দুঃখিত, এই প্রোডাক্টটি বর্তমানে স্টকে নেই (Out of Stock)');
+      toast.error('Sorry, this product is currently out of stock');
       return;
     }
     await addToCart(productData._id, size || 'Standard', selectedColor);
     if (!token && !localStorage.getItem('token')) {
-      toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+      toast.info('Please log in or sign up to complete your order');
       navigate('/login?redirect=/place-order');
     } else {
       navigate('/place-order');
@@ -291,18 +306,22 @@ const Product = () => {
               <span className="font-semibold text-gray-700">
                 {productData.reviews?.length || 0} reviews
               </span>
-              <span>•</span>
-              <span className="text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1 shadow-2xs">
-                <span>🔥</span> {productData.salesCount || 0} products sold
-              </span>
+              {Number(productData.salesCount) > 0 && (
+                <>
+                  <span>•</span>
+                  <span className="text-amber-800 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1 shadow-2xs">
+                    <span>🔥</span> {productData.salesCount} sold
+                  </span>
+                </>
+              )}
               <span>•</span>
               {productData.outOfStock ? (
-                <span className="text-red-600 font-bold flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                <span id="product-out-of-stock-badge" className="text-red-600 font-bold flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded border border-red-200">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                  Out of Stock (স্টকে নেই)
+                  Out of Stock
                 </span>
               ) : (
-                <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                <span id="product-in-stock-badge" className="text-emerald-700 font-semibold flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   In Stock & Ready to Ship
                 </span>
@@ -373,10 +392,10 @@ const Product = () => {
             {productData.outOfStock ? (
               <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-center space-y-2">
                 <p className="text-red-700 font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-2">
-                  <span>🚫</span> OUT OF STOCK (স্টকে নেই)
+                  <span>🚫</span> OUT OF STOCK
                 </p>
                 <p className="text-xs text-red-600">
-                  এই প্রোডাক্টটি বর্তমানে স্টক আউট। স্টক এভেইলেবল হলে পুনরায় অর্ডার করতে পারবেন।
+                  This item is currently out of stock. You can order it once back in stock.
                 </p>
               </div>
             ) : (
@@ -384,6 +403,7 @@ const Product = () => {
                 <div className="flex flex-col sm:flex-row gap-3">
                   {/* Order Now (Direct Checkout) */}
                   <button
+                    id="product-order-now-btn"
                     type="button"
                     onClick={handleOrderNow}
                     className="flex-1 bg-black text-white px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-wider hover:bg-neutral-800 transition active:scale-98 shadow-md cursor-pointer flex items-center justify-center gap-2 group"
@@ -392,11 +412,12 @@ const Product = () => {
                     <svg className="w-4 h-4 text-amber-400 group-hover:scale-110 transition" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                     </svg>
-                    <span>ORDER NOW (সরাসরি অর্ডার)</span>
+                    <span>ORDER NOW</span>
                   </button>
 
                   {/* Add to Cart */}
                   <button
+                    id="product-add-to-cart-btn"
                     type="button"
                     onClick={handleAddToCart}
                     className="flex-1 bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-900 px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-wider transition active:scale-98 cursor-pointer flex items-center justify-center gap-2"
@@ -409,9 +430,9 @@ const Product = () => {
                   </button>
                 </div>
 
-                <p className="text-[11px] text-gray-500 text-center sm:text-left flex items-center gap-1.5 justify-center sm:justify-start">
+                <p id="product-checkout-notice" className="text-[11px] text-gray-500 text-center sm:text-left flex items-center gap-1.5 justify-center sm:justify-start">
                   <span>⚡</span>
-                  <span><strong>Order Now</strong>-এ ক্লিক করলে সরাসরি ডেলিভারি ও পেমেন্ট পেজে নিয়ে যাবে।</span>
+                  <span>Click <strong>Order Now</strong> for instant checkout & direct payment.</span>
                 </p>
               </>
             )}
@@ -714,9 +735,26 @@ const Product = () => {
         subCategory={productData.subCategory}
       />
     </div>
+  ) : loading ? (
+    <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3">
+      <div className="animate-spin rounded-full h-9 w-9 border-b-2 border-black"></div>
+      <p className="text-xs text-zinc-500 font-medium">Loading gadget details...</p>
+    </div>
   ) : (
-    <div className="min-h-[50vh] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+    <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4 py-16">
+      <div className="w-16 h-16 rounded-full bg-zinc-100 flex items-center justify-center text-2xl mb-4 text-zinc-400">
+        📦
+      </div>
+      <h2 className="text-lg sm:text-xl font-bold text-zinc-900 mb-2">Product Not Found</h2>
+      <p className="text-sm text-zinc-500 max-w-md mb-6">
+        The product you are looking for might have been moved or updated in our catalog.
+      </p>
+      <Link 
+        to="/collection" 
+        className="bg-black text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-zinc-800 transition shadow-xs"
+      >
+        Explore Catalog
+      </Link>
     </div>
   );
 };

@@ -11,7 +11,7 @@ cloudinary.config({
 });
 
 // In-memory fallback product catalog
-let mockProducts = [...defaultProducts];
+let mockProducts = [];
 
 // function for add product
 const addProduct = async (req, res) => {
@@ -122,9 +122,7 @@ const listProducts = async (req, res) => {
     try{
         if (mongoose.connection.readyState === 1) {
             const products = await productModel.find({});
-            if (products && products.length > 0) {
-                return res.json({success: true, products});
-            }
+            return res.json({success: true, products: products || []});
         }
         res.json({success: true, products: mockProducts});
     }
@@ -356,7 +354,7 @@ const deleteReview = async (req, res) => {
                                  (review.userId === 'guest' && userId === 'guest');
 
                 if (!isAuthor) {
-                    return res.json({ success: false, message: "শুধুমাত্র মন্তব্যকারী ইউজার নিজের মন্তব্য রিমুভ করতে পারবেন" });
+                    return res.json({ success: false, message: "Only the author can delete their own review" });
                 }
 
                 product.reviews.splice(reviewIdx, 1);

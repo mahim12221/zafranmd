@@ -60,10 +60,10 @@ const AdminPortal = () => {
   // Dedicated Admin Profile & Identity State (completely separate from customer user state)
   const [adminProfile, setAdminProfile] = useState(() => {
     try {
-      const saved = localStorage.getItem('zafran_admin_profile');
+      const saved = localStorage.getItem('kaviro_admin_profile');
       return saved ? JSON.parse(saved) : {
-        name: 'Zafran Super Admin',
-        email: 'admin@zafran.com',
+        name: 'Kaviro Super Admin',
+        email: 'admin@kaviro.com',
         role: 'Super Administrator',
         title: 'Executive Store Manager',
         phone: '+880 1700-000000',
@@ -72,8 +72,8 @@ const AdminPortal = () => {
       };
     } catch {
       return {
-        name: 'Zafran Super Admin',
-        email: 'admin@zafran.com',
+        name: 'Kaviro Super Admin',
+        email: 'admin@kaviro.com',
         role: 'Super Administrator',
         title: 'Executive Store Manager',
         phone: '+880 1700-000000',
@@ -84,7 +84,7 @@ const AdminPortal = () => {
   });
 
   const [adminEditForm, setAdminEditForm] = useState({
-    name: 'Zafran Super Admin',
+    name: 'Kaviro Super Admin',
     title: 'Executive Store Manager',
     phone: '+880 1700-000000'
   });
@@ -569,7 +569,7 @@ const AdminPortal = () => {
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-widest text-white">ZAFRAN</span>
+                <span className="text-xl font-black tracking-widest text-white">KAVIRO</span>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-400/30">
                   ADMIN
                 </span>
@@ -588,7 +588,7 @@ const AdminPortal = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@zafran.com"
+                placeholder="admin@kaviro.com"
                 required
                 className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 text-sm placeholder:text-slate-600 transition"
               />
@@ -618,7 +618,7 @@ const AdminPortal = () => {
               <span className="text-[10px] text-sky-400 font-mono">Development Helper</span>
             </div>
             <p className="font-mono text-slate-400 text-[11px] select-all cursor-pointer bg-slate-900/90 p-2 rounded-lg border border-slate-800">
-              Email: <span className="text-sky-300">admin@zafran.com</span><br/>
+              Email: <span className="text-sky-300">admin@kaviro.com</span><br/>
               Password: <span className="text-sky-300">admin1234</span>
             </p>
           </div>
@@ -641,7 +641,7 @@ const AdminPortal = () => {
                 <span>{adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}</span>
               )}
             </div>
-            <span className="text-base sm:text-lg font-black tracking-widest text-white hidden xs:inline">ZAFRAN</span>
+            <span className="text-base sm:text-lg font-black tracking-widest text-white hidden xs:inline">KAVIRO</span>
             <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-400/30">
               ADMIN
             </span>
@@ -790,7 +790,7 @@ const AdminPortal = () => {
         </aside>
 
         {/* Content Area */}
-        <main className="flex-1 bg-white text-slate-900 rounded-2xl p-6 shadow-xl border border-slate-800/50 min-h-[600px]">
+        <main className="flex-1 w-full min-w-0 bg-white text-slate-900 rounded-2xl p-3 sm:p-5 md:p-6 shadow-xl border border-slate-800/50 min-h-[550px] overflow-hidden">
           {/* TAB 1: PRODUCT LIST WITH QUICK EDIT & DETAILS MODAL */}
           {activeTab === 'list' && (
             <div>
@@ -833,63 +833,73 @@ const AdminPortal = () => {
                     <div
                       key={item._id}
                       onClick={() => openProductModal(item)}
-                      className="grid grid-cols-[0.8fr_2fr_1fr_1fr] md:grid-cols-[0.8fr_2.5fr_1fr_1fr_1.2fr_1.2fr] items-center gap-2 py-2.5 px-3 border border-gray-200 rounded-xl text-sm bg-white hover:bg-blue-50/40 transition cursor-pointer group shadow-2xs"
+                      className="p-3 border border-gray-200 rounded-xl bg-white hover:bg-blue-50/40 transition cursor-pointer group shadow-2xs md:grid md:grid-cols-[0.8fr_2.5fr_1fr_1fr_1.2fr_1.2fr] md:items-center md:gap-2 md:py-2.5 md:px-3 text-sm min-w-0 w-full overflow-hidden"
                     >
-                      <img
-                        src={(item.images && item.images[0]) || (item.image && item.image[0]) || '/placeholder.jpg'}
-                        alt={item.name}
-                        className="w-12 h-12 object-cover rounded-lg border border-gray-200 group-hover:scale-105 transition"
-                      />
-                      <div>
-                        <p className="font-bold text-gray-900 group-hover:text-blue-600 transition flex items-center gap-1.5 flex-wrap">
-                          <span>{item.name}</span>
-                          <span className="text-[10px] bg-sky-100 text-sky-800 font-semibold px-1.5 py-0.5 rounded">👁️ View</span>
-                        </p>
-                        {item.outOfStock && <span className="md:hidden text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Out of Stock</span>}
+                      <div className="flex items-start gap-3 min-w-0 md:contents">
+                        <img
+                          src={(item.images && item.images[0]) || (item.image && item.image[0]) || '/placeholder.jpg'}
+                          alt={item.name}
+                          className="w-14 h-14 md:w-12 md:h-12 object-cover rounded-lg border border-gray-200 group-hover:scale-105 transition shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-gray-900 group-hover:text-blue-600 transition flex items-center gap-1.5 flex-wrap">
+                            <span className="truncate">{item.name}</span>
+                            <span className="text-[10px] bg-sky-100 text-sky-800 font-semibold px-1.5 py-0.5 rounded shrink-0">👁️ View</span>
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+                            <span className="text-gray-500">{item.category}</span>
+                            <span className="text-gray-300 md:hidden">•</span>
+                            <span className="font-bold text-gray-900 md:hidden">{currency}{item.price}</span>
+                            {Number(item.discount) > 0 && <span className="text-[10px] font-bold text-red-500 md:hidden">-{item.discount}%</span>}
+                          </div>
+                          {item.outOfStock && <span className="md:hidden inline-block mt-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Out of Stock</span>}
+                        </div>
+
+                        <p className="hidden md:block text-gray-600 text-xs truncate">{item.category}</p>
+
+                        <div className="hidden md:block">
+                          <p className="font-bold text-gray-900">{currency}{item.price}</p>
+                          {Number(item.discount) > 0 && <span className="text-[10px] font-bold text-red-500">-{item.discount}% Off</span>}
+                        </div>
                       </div>
 
-                      <p className="text-gray-600 text-xs truncate">{item.category}</p>
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-gray-100 md:border-t-0 md:mt-0 md:pt-0 md:contents">
+                        {/* Stock Toggle Button */}
+                        <div className="flex items-center md:justify-center shrink-0" onClick={e => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => handleToggleStock(item._id, !item.outOfStock, e)}
+                            className={`px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-full transition shadow-2xs cursor-pointer flex items-center gap-1.5 ${
+                              item.outOfStock 
+                                 ? 'bg-red-50 text-red-700 border border-red-300 hover:bg-red-100' 
+                                 : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                            }`}
+                            title="Toggle Stock Availability"
+                          >
+                            <span className={`w-2 h-2 rounded-full ${item.outOfStock ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                            <span>{item.outOfStock ? 'Out of Stock' : 'In Stock'}</span>
+                          </button>
+                        </div>
 
-                      <div>
-                        <p className="font-bold text-gray-900">{currency}{item.price}</p>
-                        {Number(item.discount) > 0 && <span className="text-[10px] font-bold text-red-500">-{item.discount}% Off</span>}
-                      </div>
-
-                      {/* Stock Toggle Button */}
-                      <div className="flex items-center justify-center" onClick={e => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={(e) => handleToggleStock(item._id, !item.outOfStock, e)}
-                          className={`px-3 py-1.5 text-xs font-bold rounded-full transition shadow-2xs cursor-pointer flex items-center gap-1.5 ${
-                            item.outOfStock 
-                              ? 'bg-red-50 text-red-700 border border-red-300 hover:bg-red-100' 
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                          }`}
-                          title="Toggle Stock Availability"
-                        >
-                          <span className={`w-2 h-2 rounded-full ${item.outOfStock ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
-                          <span>{item.outOfStock ? 'Out of Stock' : 'In Stock'}</span>
-                        </button>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => openProductModal(item)}
-                          className="text-blue-600 hover:text-blue-800 font-bold px-2.5 py-1 hover:bg-blue-100/60 rounded-lg transition text-xs border border-blue-200"
-                          title="View Details & Edit"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleRemoveProduct(item._id, e)}
-                          className="text-red-600 hover:text-red-800 font-bold px-2.5 py-1 hover:bg-red-100/60 rounded-lg transition text-xs border border-red-200"
-                          title="Delete Product"
-                        >
-                          🗑️ Delete
-                        </button>
+                        {/* Action Buttons */}
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0" onClick={e => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => openProductModal(item)}
+                            className="text-blue-600 hover:text-blue-800 font-bold px-2.5 py-1 hover:bg-blue-100/60 rounded-lg transition text-xs border border-blue-200"
+                            title="View Details & Edit"
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleRemoveProduct(item._id, e)}
+                            className="text-red-600 hover:text-red-800 font-bold px-2.5 py-1 hover:bg-red-100/60 rounded-lg transition text-xs border border-red-200"
+                            title="Delete Product"
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -993,19 +1003,19 @@ const AdminPortal = () => {
                           )}
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-col xs:flex-row gap-2 w-full min-w-0">
                           <input
                             type="text"
                             value={newColorInput}
                             onChange={(e) => setNewColorInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddModalColor())}
                             placeholder="e.g. Matte Black"
-                            className="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-black"
+                            className="flex-1 min-w-0 w-full px-3 py-2 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-black"
                           />
                           <button
                             type="button"
                             onClick={handleAddModalColor}
-                            className="bg-gray-800 hover:bg-black text-white text-xs font-bold px-3 py-1.5 rounded-lg transition"
+                            className="bg-gray-800 hover:bg-black text-white text-xs font-bold px-3 py-2 sm:py-1.5 rounded-lg transition shrink-0 w-full xs:w-auto cursor-pointer"
                           >
                             + Add Color
                           </button>
@@ -1031,7 +1041,7 @@ const AdminPortal = () => {
                           <span>💬 Customer Reviews ({selectedProduct.reviews?.length || 0})</span>
                         </h4>
                         <span className="text-[10px] text-gray-500 italic">
-                          *ইউজার নিজে ওয়েবসাইট থেকে তার কমেন্ট রিমুভ করতে পারবেন
+                          *Customers can remove their own comments directly from the product page
                         </span>
                       </div>
 
@@ -1136,10 +1146,11 @@ const AdminPortal = () => {
                       onChange={(e) => setCategory(e.target.value)}
                       className="w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-3.5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:border-black focus:bg-white focus:ring-2 focus:ring-black/5 transition cursor-pointer pr-8"
                     >
-                      <option value="Electronics">Electronics</option>
                       <option value="Gadgets">Gadgets</option>
+                      <option value="Fidget &amp; EDC">Fidget &amp; EDC</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Smart Gear">Smart Gear</option>
                       <option value="Accessories">Accessories</option>
-                      <option value="Clothing">Clothing</option>
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-500">
                       <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
@@ -1157,14 +1168,15 @@ const AdminPortal = () => {
                       onChange={(e) => setSubCategory(e.target.value)}
                       className="w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-3.5 py-2.5 text-sm font-medium text-gray-900 focus:outline-none focus:border-black focus:bg-white focus:ring-2 focus:ring-black/5 transition cursor-pointer pr-8"
                     >
+                      <option value="Fidget Toys">Fidget Toys</option>
+                      <option value="EDC Gear">EDC Gear</option>
                       <option value="Audio">Audio</option>
                       <option value="Wearables">Wearables</option>
+                      <option value="Desk Gadgets">Desk Gadgets</option>
                       <option value="Gaming">Gaming</option>
-                      <option value="Cameras">Cameras</option>
-                      <option value="Power">Power</option>
-                      <option value="Smartphones">Smartphones</option>
-                      <option value="Laptops">Laptops</option>
-                      <option value="Apparel">Apparel</option>
+                      <option value="Power &amp; Charging">Power &amp; Charging</option>
+                      <option value="Smart Devices">Smart Devices</option>
+                      <option value="Accessories">Accessories</option>
                       <option value="Others">Others</option>
                     </select>
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-500">
@@ -1254,7 +1266,7 @@ const AdminPortal = () => {
                 </div>
 
                 {/* Custom Color Adder */}
-                <div className="flex gap-2 pt-1">
+                <div className="flex flex-col sm:flex-row gap-2 pt-1 w-full min-w-0">
                   <input
                     type="text"
                     value={customColorInput}
@@ -1265,13 +1277,13 @@ const AdminPortal = () => {
                         handleAddCustomColor();
                       }
                     }}
-                    placeholder="Type custom color (e.g. Sunset Orange, Titanium)..."
-                    className="flex-1 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/5"
+                    placeholder="Type custom color (e.g. Orange, Navy, Gold)..."
+                    className="flex-1 min-w-0 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 sm:py-2 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-black focus:ring-2 focus:ring-black/5"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomColor}
-                    className="bg-gray-900 hover:bg-black text-white text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer shrink-0"
+                    className="bg-gray-900 hover:bg-black text-white text-xs font-bold px-4 py-2.5 sm:py-2 rounded-xl transition cursor-pointer shrink-0 w-full sm:w-auto"
                   >
                     + Add Color
                   </button>
@@ -1880,14 +1892,14 @@ const AdminPortal = () => {
                   {/* Admin Details */}
                   <div className="flex-1 text-center sm:text-left space-y-1.5">
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                      <h3 className="text-2xl font-black text-white tracking-tight">{adminProfile.name || 'Zafran Super Admin'}</h3>
+                      <h3 className="text-2xl font-black text-white tracking-tight">{adminProfile.name || 'Kaviro Super Admin'}</h3>
                       <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-950">
                         {adminProfile.role || 'Super Admin'}
                       </span>
                     </div>
                     <p className="text-sm font-medium text-sky-300/90">{adminProfile.title || 'Executive Store Manager'}</p>
                     <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-2">
-                      <span>📧 {adminProfile.email || 'admin@zafran.com'}</span>
+                      <span>📧 {adminProfile.email || 'admin@kaviro.com'}</span>
                       <span>•</span>
                       <span>📞 {adminProfile.phone || '+880 1700-000000'}</span>
                     </p>
@@ -1922,7 +1934,7 @@ const AdminPortal = () => {
                       value={adminEditForm.name}
                       onChange={(e) => setAdminEditForm(prev => ({ ...prev, name: e.target.value }))}
                       required
-                      placeholder="e.g. Zafran Super Admin"
+                      placeholder="e.g. Kaviro Super Admin"
                       className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
@@ -1963,7 +1975,7 @@ const AdminPortal = () => {
                     </label>
                     <input
                       type="email"
-                      value={adminProfile.email || 'admin@zafran.com'}
+                      value={adminProfile.email || 'admin@kaviro.com'}
                       disabled
                       className="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed font-mono"
                     />

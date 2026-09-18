@@ -1,79 +1,71 @@
-import React from 'react'
+import React from 'react';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 
 const Contact = () => {
   return (
-    <div>
-      <div className='text-center text-2xl pt-10 border-t'>
-        <Title text1={'CONTACT'} text2={'US'}/>
+    <div className="py-8">
+      <div className="text-center mb-8">
+        <Title text1={'CONTACT'} text2={'KAVIRO'} />
+        <p className="text-xs sm:text-sm text-zinc-500 max-w-lg mx-auto mt-1">
+          Have a question about sizing, custom inquiries, or your order? We're always here to assist.
+        </p>
       </div>
-      <div className='my-10 flex flex-col justify-center md:flex-row gap-12 mb-28 items-center'>
-        <img className='w-full md:max-w-[480px] rounded-lg shadow-sm' src={assets.contact_img} alt="Zafran Contact" />
-        <div className='flex flex-col justify-center items-start gap-5 max-w-lg'>
+
+      <div className="my-10 flex flex-col justify-center md:flex-row gap-12 mb-24 items-center">
+        <img className="w-full md:max-w-[480px] rounded-2xl shadow-lg border border-zinc-200/80" src={assets.contact_img} alt="Kaviro Concierge" />
+        <div className="flex flex-col justify-center items-start gap-6 max-w-lg p-6 sm:p-8 bg-zinc-50 border border-zinc-200/80 rounded-3xl">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
-              Direct Contact
+            <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-100/70 border border-orange-200 px-2.5 py-1 rounded-full">
+              Direct Concierge
             </span>
-            <h3 className='font-semibold text-2xl text-gray-900 mt-1'>Zafran Headquarters</h3>
+            <h3 className="font-extrabold text-2xl text-zinc-950 mt-2">Kaviro Customer Care</h3>
           </div>
 
-          <div className='text-sm text-gray-600 space-y-1.5'>
-            <p><strong>Founder &amp; CEO:</strong> Mahim Afridi</p>
-            <p><strong>Head Office:</strong> Dhaka, Bangladesh</p>
+          <div className="text-xs sm:text-sm text-zinc-600 space-y-2">
+            <p><strong>Founder:</strong> Mahim Afridi</p>
+            <p><strong>Headquarters:</strong> Dhaka, Bangladesh</p>
             <p>
               <strong>Direct Phone:</strong>{' '}
-              <a href="tel:01880172859" className="text-black hover:underline font-medium">01880172859</a> /{' '}
-              <a href="tel:01742111888" className="text-black hover:underline font-medium">01742111888</a>
+              <a href="tel:01880172859" className="text-zinc-950 hover:text-orange-600 underline font-bold">01880172859</a> /{' '}
+              <a href="tel:01742111888" className="text-zinc-950 hover:text-orange-600 underline font-bold">01742111888</a>
             </p>
             <p>
               <strong>Official Email:</strong>{' '}
-              <a href="mailto:contact@zafran.com" className="text-black hover:underline">contact@zafran.com</a>
-            </p>
-            <p>
-              <strong>Personal Support:</strong>{' '}
-              <a href="mailto:mahim.afridi@zafran.com" className="text-black hover:underline">mahim.afridi@zafran.com</a>
+              <a href="mailto:contact@kaviro.com" className="text-zinc-950 hover:text-orange-600 underline">contact@kaviro.com</a>
             </p>
           </div>
 
-          <div className="pt-2">
-            <p className='font-semibold text-base text-gray-900 mb-2'>Connect with Mahim Afridi</p>
-            <div className="flex flex-wrap gap-2">
-              <a
-                href="https://www.facebook.com/mahim.afridi.136555"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-[#1877F2] text-white px-4 py-2 text-xs font-semibold rounded hover:opacity-90 transition"
-              >
-                Facebook Profile
-              </a>
-              <a
-                href="https://github.com/mahim12221/zafranmd.git"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 text-xs font-semibold rounded hover:bg-black transition"
-              >
-                GitHub Repository
-              </a>
+          <div className="pt-2 w-full">
+            <p className="font-bold text-xs uppercase tracking-wider text-zinc-400 mb-3">Connect Instantly</p>
+            <div className="flex flex-wrap gap-2.5">
               <a
                 href="https://wa.me/8801742111888"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-[#25D366] text-white px-4 py-2 text-xs font-semibold rounded hover:opacity-90 transition"
+                className="inline-flex items-center gap-2 bg-[#25D366] text-white px-4 py-2.5 text-xs font-bold rounded-xl hover:opacity-90 transition shadow-xs"
               >
-                WhatsApp Us
+                💬 WhatsApp Chat
+              </a>
+              <a
+                href="https://www.facebook.com/mahim.afridi.136555"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#1877F2] text-white px-4 py-2.5 text-xs font-bold rounded-xl hover:opacity-90 transition shadow-xs"
+              >
+                Facebook
               </a>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-gray-100 w-full">
-            <p className='font-semibold text-sm text-gray-900'>Customer Care Hours</p>
-            <p className='text-xs text-gray-500 mt-0.5'>Saturday – Thursday: 9:00 AM – 10:00 PM (GMT+6)</p>
+          <div className="pt-4 border-t border-zinc-200/80 w-full text-xs text-zinc-500">
+            <p className="font-semibold text-zinc-800">Operational Hours</p>
+            <p className="mt-0.5">Saturday – Thursday: 9:00 AM – 10:00 PM (GMT+6)</p>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Contact;

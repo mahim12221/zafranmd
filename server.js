@@ -77,11 +77,20 @@ io.on('connection', (socket) => {
     }
   });
 });
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // Connect DB & Cloudinary safely
-await connectDB();
-await connectCloudinary();
+try {
+  await connectDB();
+} catch (e) {
+  console.warn('[Database] Initial connect failed, continuing:', e.message);
+}
+
+try {
+  await connectCloudinary();
+} catch (e) {
+  console.warn('[Cloudinary] Initial connect failed, continuing:', e.message);
+}
 
 // Middlewares
 app.use(express.json());
@@ -108,8 +117,8 @@ if (process.env.NODE_ENV !== 'production') {
   const vite = await createViteServer({
     server: {
       middlewareMode: true,
-      host: '0.0.0.0',
-      port: 3000
+      hmr: false,
+      host: '0.0.0.0'
     },
     appType: 'spa',
     root: path.resolve(__dirname, 'frontend')

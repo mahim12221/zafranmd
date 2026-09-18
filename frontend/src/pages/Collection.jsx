@@ -107,10 +107,10 @@ const Collection = () => {
             </div>
             <div className='flex flex-col gap-2.5 text-sm text-gray-700'>
               {[
-                { name: 'Electronics', count: products.filter(p => p.category === 'Electronics').length },
                 { name: 'Gadgets', count: products.filter(p => p.category === 'Gadgets').length },
-                { name: 'Accessories', count: products.filter(p => p.category === 'Accessories').length },
-                { name: 'Clothing', count: products.filter(p => p.category === 'Clothing').length }
+                { name: 'Fidget & EDC', count: products.filter(p => p.category === 'Fidget & EDC').length },
+                { name: 'Electronics', count: products.filter(p => p.category === 'Electronics').length },
+                { name: 'Accessories', count: products.filter(p => p.category === 'Accessories').length }
               ].map(cat => {
                 const isSelected = category.includes(cat.name);
                 return (
@@ -163,7 +163,7 @@ const Collection = () => {
               )}
             </div>
             <div className='flex flex-wrap gap-2'>
-              {['Audio', 'Wearables', 'Gaming', 'Cameras', 'Power', 'Smartphones', 'Laptops', 'Topwear', 'Bottomwear'].map(type => {
+              {['Fidget Toys', 'EDC Gear', 'Audio', 'Wearables', 'Desk Gadgets', 'Gaming', 'Power & Charging', 'Smart Devices'].map(type => {
                 const isSelected = subCategory.includes(type);
                 return (
                   <button
@@ -230,7 +230,7 @@ const Collection = () => {
             </button>
           </div>
         ) : (
-          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-8'>
+          <div className='columns-2 md:columns-3 lg:columns-4 gap-3 sm:gap-4 md:gap-5'>
             {filterProducts.map((item, index)=>(
               <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.images || item.image} discount={item.discount} outOfStock={item.outOfStock} salesCount={item.salesCount} />
             ))}

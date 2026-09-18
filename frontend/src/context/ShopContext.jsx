@@ -26,7 +26,7 @@ const ShopContextProvider = (props) => {
             return {};
         }
     });
-    const [products, setProducts] = useState(localProducts || []);
+    const [products, setProducts] = useState([]);
     const [token, setToken] = useState(() => localStorage.getItem('token') || '');
     const [userData, setUserData] = useState(null);
     const [selectedChatUser, setSelectedChatUser] = useState(null);
@@ -152,9 +152,9 @@ const ShopContextProvider = (props) => {
 
     const getProductsData = async () => {
         try {
-            const response = await axios.get(`${backendUrl || ''}/api/product/list`)
-            if(response.data.success && response.data.products && response.data.products.length > 0){
-                const normalized = response.data.products.map(p => {
+            const response = await axios.get(`${backendUrl || ''}/api/product/list`);
+            if (response.data.success && Array.isArray(response.data.products)) {
+                const serverList = response.data.products.map(p => {
                     const rawImgs = Array.isArray(p.images) && p.images.length > 0 
                         ? p.images 
                         : (Array.isArray(p.image) && p.image.length > 0 
@@ -164,14 +164,18 @@ const ShopContextProvider = (props) => {
                         ...p,
                         image: rawImgs,
                         images: rawImgs,
-                        colors: Array.isArray(p.colors) ? p.colors : []
+                        colors: Array.isArray(p.colors) ? p.colors : [],
+                        salesCount: Number(p.salesCount) || 0
                     };
                 });
-                setProducts(normalized);
+                setProducts(serverList);
+            } else {
+                setProducts([]);
             }
         }
         catch (error){
-            console.log('Using local products catalog:', error.message)
+            console.log('Error loading products catalog:', error.message);
+            setProducts([]);
         }
     }
 

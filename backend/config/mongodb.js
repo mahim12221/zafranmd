@@ -42,28 +42,33 @@ const connectDB = async() => {
             connectTimeoutMS: 5000
         });
 
-        // If products collection is empty, auto-seed initial products
+        // Clean up previously seeded test products so user has clean slate to add real products manually
         try {
-            const count = await productModel.countDocuments();
-            if (count === 0) {
-                console.log('[Database] Seeding initial products to MongoDB Atlas...');
-                const seedData = defaultProducts.map(p => ({
-                    name: p.name,
-                    description: p.description,
-                    price: p.price,
-                    image: p.images || [p.image],
-                    images: p.images || [p.image],
-                    category: p.category,
-                    subCategory: p.subCategory,
-                    sizes: p.sizes,
-                    bestseller: p.bestseller || false,
-                    date: p.date || Date.now()
-                }));
-                await productModel.insertMany(seedData);
-                console.log(`[Database] Successfully seeded ${seedData.length} products to MongoDB Atlas`);
-            }
+            await productModel.deleteMany({
+                name: {
+                    $in: [
+                        "Magnetic Slider EDC Haptic Fidget Toy",
+                        "Pro ANC Wireless Noise Cancelling Earbuds",
+                        "Titanium EDC Mini Bolt-Action Pen",
+                        "RGB Mechanical Macropad & Knob Controller",
+                        "Modular Magnetic Key Organizer & Carabiner",
+                        "Fast Magnetic Wireless Power Bank 10000mAh",
+                        "RGB Magnetic Levitation Display Stand",
+                        "Aerospace Grade Metal Fidget Spinner Pro",
+                        "Aroma Flame Diffuser & Ambient Night Light",
+                        "Smart OLED Air Quality & Temp Monitor",
+                        "Cyberpunk Transparent Fast Charging Cable",
+                        "Minimalist RFID Blocking Pop-Up Cardholder",
+                        "Women Round Neck Cotton Top",
+                        "Men Round Neck Pure Cotton T-shirt",
+                        "Girls Round Neck Cotton Top",
+                        "Men Slim Fit Relaxed Denim Jacket",
+                        "Women Zip-Front Relaxed Fit Jacket"
+                    ]
+                }
+            });
         } catch (seedErr) {
-            console.warn('[Database] Seed check note:', seedErr.message);
+            console.warn('[Database] Seed clean check note:', seedErr.message);
         }
 
         return true;

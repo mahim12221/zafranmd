@@ -1,74 +1,76 @@
-import React from 'react'
+import React from 'react';
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
 
 const About = () => {
   return (
-    <div>
-      <div className='text-2xl text-center pt-8 border-t'>
-        <Title text1={'ABOUT'} text2={'US'}/>
+    <div className="py-8">
+      <div className="text-center mb-8">
+        <Title text1={'ABOUT'} text2={'KAVIRO'} />
+        <p className="text-xs sm:text-sm text-zinc-500 max-w-lg mx-auto mt-1">
+          The story behind innovative smart gadgets, EDC fidget gear, and everyday tech innovations.
+        </p>
       </div>
-      <div className='my-10 flex flex-col md:flex-row gap-16 items-center'>
-        <img className='w-full md:max-w-[450px] rounded-lg shadow-sm' src={assets.about_img} alt="Zafran Fashion" />
-        <div className='flex flex-col justify-center gap-5 md:w-2/4 text-gray-600 text-sm leading-relaxed'>
+
+      <div className="my-10 flex flex-col md:flex-row gap-12 lg:gap-16 items-center">
+        <img className="w-full md:max-w-[450px] rounded-2xl shadow-lg border border-zinc-200/80" src={assets.about_img} alt="Kaviro Tech Story" />
+        <div className="flex flex-col justify-center gap-5 md:w-2/4 text-zinc-600 text-sm leading-relaxed">
           <p>
-            <strong>Zafran</strong> was established with a clear vision: to redefine contemporary tech lifestyle by harmonizing modern aesthetics, premium electronics, and accessible smart devices.
+            <strong>Kaviro</strong> was established with a singular vision: to bring distinctive, high-performance smart gadgets, tactile fidget toys, and innovative everyday tech accessories to everyone without the excessive markup of traditional tech retailers.
           </p>
           <p>
-            Under the leadership of Founder &amp; CEO <strong>Mahim Afridi</strong>, Zafran has evolved into a dedicated tech brand focused on authenticity, unmatched device reliability, and exceptional customer delight across Bangladesh and worldwide.
+            Founded by <strong>Mahim Afridi</strong>, Kaviro represents innovation, curiosity, and an uncompromising commitment to premium build quality, satisfying EDC mechanics, and reliable electronics.
           </p>
-          <div className="p-4 bg-gray-50 border-l-4 border-black rounded">
-            <p className="text-gray-900 font-medium italic">
-              &ldquo;Our promise at Zafran is simple: uncompromised quality, effortless ordering, and next-gen essentials that empower your daily life.&rdquo;
+          <div className="p-5 bg-zinc-50 border-l-4 border-orange-500 rounded-r-2xl">
+            <p className="text-zinc-900 font-medium italic text-sm">
+              &ldquo;We don't just sell gadgets; we curate tools, fidget toys, and devices that spark excitement, enhance productivity, and bring everyday utility.&rdquo;
             </p>
-            <p className="text-xs text-gray-700 font-semibold mt-2">
-              — Mahim Afridi, Founder &amp; CEO
+            <p className="text-xs text-orange-600 font-bold mt-2 uppercase tracking-wider">
+              — Mahim Afridi, Founder
             </p>
           </div>
-          <b className='text-gray-900 text-base'>Our Mission &amp; Values</b>
           <p>
-            We curate carefully inspected tech products, partner with ethical manufacturing hubs, and maintain an easy-to-use digital storefront ensuring every package delivered meets the highest benchmarks of quality.
+            Every product in the Kaviro collection is rigorously tested for durability, tactile responsiveness, and build perfection so you receive only the finest gear.
           </p>
           <div className="flex items-center gap-3 pt-2 text-xs">
             <a
               href="https://www.facebook.com/mahim.afridi.136555"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded font-medium hover:bg-black hover:text-white transition"
+              className="px-4 py-2 bg-zinc-900 text-white rounded-xl font-bold hover:bg-orange-500 transition shadow-xs"
             >
-              Connect on Facebook
-            </a>
-            <a
-              href="https://github.com/mahim12221/zafranmd.git"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded font-medium hover:bg-black hover:text-white transition"
-            >
-              GitHub Project
+              Connect with Mahim Afridi
             </a>
           </div>
         </div>
       </div>
 
-      <div className='text-xl py-6'>
-        <Title text1={'WHY'} text2={'CHOOSE US'}/>
+      <div className="text-center pt-10 pb-4">
+        <Title text1={'WHY CHOOSE'} text2={'KAVIRO'} />
       </div>
-      <div className='flex flex-col md:flex-row text-sm mb-20 gap-4 md:gap-0'>
-        <div className='border px-8 md:px-12 py-10 flex flex-col gap-3 flex-1'>
-          <b className="text-gray-900">Curated Quality Assurance:</b>
-          <p className='text-gray-600'>Every device undergoes rigorous quality inspections from internal testing to packaging before shipment.</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+        <div className="p-8 rounded-2xl bg-zinc-50 border border-zinc-200/80 hover:bg-white transition duration-300 shadow-2xs">
+          <h4 className="text-base font-extrabold text-zinc-950 mb-2">Original Build &amp; Tech Integrity</h4>
+          <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed">
+            Precision-machined metal EDC toys, tested magnetic mechanisms, and authentic certified electronic components built to last.
+          </p>
         </div>
-        <div className='border px-8 md:px-12 py-10 flex flex-col gap-3 flex-1'>
-          <b className="text-gray-900">Seamless Shopping:</b>
-          <p className='text-gray-600'>Fast checkout, instant order tracking, and cash-on-delivery options designed for effortless ordering.</p>
+        <div className="p-8 rounded-2xl bg-zinc-50 border border-zinc-200/80 hover:bg-white transition duration-300 shadow-2xs">
+          <h4 className="text-base font-extrabold text-zinc-950 mb-2">Fast Direct Dispatch</h4>
+          <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed">
+            Swift order processing with nationwide doorstep delivery and seamless Cash on Delivery support across all 64 districts.
+          </p>
         </div>
-        <div className='border px-8 md:px-12 py-10 flex flex-col gap-3 flex-1'>
-          <b className="text-gray-900">Dedicated Support:</b>
-          <p className='text-gray-600'>Direct support via phone (01880172859) and WhatsApp (01742111888) for all your inquiries.</p>
+        <div className="p-8 rounded-2xl bg-zinc-50 border border-zinc-200/80 hover:bg-white transition duration-300 shadow-2xs">
+          <h4 className="text-base font-extrabold text-zinc-950 mb-2">7-Day Customer Peace of Mind</h4>
+          <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed">
+            Transparent replacement guarantee and technical support backed by direct hotline and WhatsApp support to ensure total satisfaction.
+          </p>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default About;

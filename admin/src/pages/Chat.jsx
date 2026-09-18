@@ -15,7 +15,39 @@ const Chat = ({ token }) => {
 
   const [editingMessage, setEditingMessage] = useState(null);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const touchTimerRef = useRef(null);
+
+  const isUserOnline = (userIdToCheck, custInfo) => {
+    if (!onlineUsers || !Array.isArray(onlineUsers) || onlineUsers.length === 0) return false;
+    const targetId = String(userIdToCheck || '').trim().toLowerCase();
+    const custObjId = String(custInfo?._id || '').trim().toLowerCase();
+    const custEmail = String(custInfo?.email || '').trim().toLowerCase();
+
+    return onlineUsers.some(item => {
+      const val = String(item || '').trim().toLowerCase();
+      if (!val || val === 'admin') return false;
+      return (targetId && val === targetId) || 
+             (custObjId && val === custObjId) || 
+             (custEmail && val === custEmail);
+    });
+  };
+
+  const fetchOnlineUsers = async () => {
+    try {
+      const res = await axios.get(`${backendUrl}/api/chat/online-users`);
+      if (res.data && res.data.success && Array.isArray(res.data.onlineUsers)) {
+        setOnlineUsers(res.data.onlineUsers);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchOnlineUsers();
+    const interval = setInterval(fetchOnlineUsers, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const handleClick = () => setContextMenu({ visible: false, x: 0, y: 0, msg: null });
@@ -62,6 +94,10 @@ const Chat = ({ token }) => {
       
       newSocket.on('connect', () => {
         newSocket.emit('register', 'admin');
+      });
+
+      newSocket.on('onlineUsers', (usersList) => {
+        setOnlineUsers(usersList);
       });
 
       newSocket.on('receiveMessage', (message) => {
@@ -283,31 +319,73 @@ const Chat = ({ token }) => {
   const activeCustomerInfo = customersMap[activeUser] || {};
 
   return (
-    <div className="flex flex-col sm:flex-row h-[82vh] border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-xs mt-3">
+    <div className="flex flex-col sm:flex-row h-[82vh] border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-xs mt-3 w-full min-w-0">
       {/* Sidebar: Conversations List */}
-      <div className={`w-full sm:w-1/3 border-r border-gray-200 bg-gray-50/70 flex-col h-full ${activeUser ? 'hidden sm:flex' : 'flex'}`}>
-        <div className="p-3.5 bg-white border-b border-gray-200 flex justify-between items-center">
-          <h2 className="font-bold text-gray-900 text-sm sm:text-base flex items-center gap-2">
-            <span>💬</span>
-            <span>Customer Live Chats</span>
-          </h2>
-          <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            {conversations.length}
-          </span>
+      <div className={`w-full sm:w-1/3 border-r border-gray-200 bg-gray-50/70 flex flex-col h-full min-h-0 overflow-hidden ${activeUser ? 'hidden sm:flex' : 'flex'}`}>
+        <div className="p-3 bg-white border-b border-gray-200 shrink-0">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-bold text-gray-900 text-sm sm:text-base flex items-center gap-2">
+              <span>💬</span>
+              <span>Customer Live Chats</span>
+            </h2>
+            <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              {conversations.length}
+            </span>
+          </div>
+
+          <div className="relative">
+            <input 
+              type="text"
+              placeholder="Search customers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:bg-white transition"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-          {conversations.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 text-xs">
-              <p className="text-2xl mb-1">📭</p>
-              <p>No customer chats found</p>
-            </div>
-          ) : (
-            conversations.map(conv => {
+
+        <div 
+          className="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-100 overscroll-contain"
+          style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}
+        >
+          {(() => {
+            const filteredConvs = conversations.filter(conv => {
+              if (!searchTerm.trim()) return true;
+              const custId = conv.participants.find(p => p !== 'admin');
+              const custInfo = customersMap[custId] || {};
+              const q = searchTerm.toLowerCase();
+              return (
+                (custInfo.name && custInfo.name.toLowerCase().includes(q)) ||
+                (custInfo.email && custInfo.email.toLowerCase().includes(q)) ||
+                (custId && custId.toLowerCase().includes(q)) ||
+                (conv.lastMessage && conv.lastMessage.toLowerCase().includes(q))
+              );
+            });
+
+            if (filteredConvs.length === 0) {
+              return (
+                <div className="text-center p-8 text-gray-400 text-xs">
+                  <p className="text-2xl mb-1">📭</p>
+                  <p>{searchTerm ? 'No matching customer chats found' : 'No customer chats found'}</p>
+                </div>
+              );
+            }
+
+            return filteredConvs.map(conv => {
               const custId = conv.participants.find(p => p !== 'admin');
               const isActive = activeUser === custId;
               const custInfo = customersMap[custId] || {};
               const displayName = custInfo.name || 'Customer ' + custId.substring(0, 6);
               const profilePic = custInfo.profilePic;
+              const online = isUserOnline(custId, custInfo);
 
               return (
                 <div 
@@ -323,19 +401,23 @@ const Chat = ({ token }) => {
                         {displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                    <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-white rounded-full ${online ? 'bg-emerald-500 ring-2 ring-emerald-400/30' : 'bg-gray-400'}`}></span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between items-center gap-1">
                       <p className="font-bold text-gray-900 text-xs sm:text-sm truncate">{displayName}</p>
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${online ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                        {online ? 'Online' : 'Offline'}
+                      </span>
                     </div>
                     {custInfo.email && <p className="text-[10px] text-gray-400 truncate">{custInfo.email}</p>}
                     <p className="text-xs text-gray-500 truncate mt-0.5">{conv.lastMessage || 'Sent an attachment'}</p>
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
       </div>
 
@@ -344,42 +426,47 @@ const Chat = ({ token }) => {
         {activeUser ? (
           <>
             {/* Active Customer Chat Header */}
-            <div className="p-3 sm:p-4 border-b border-gray-200 bg-white shadow-xs flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2.5 sm:p-4 border-b border-gray-200 bg-white shadow-xs flex items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
                 <button 
                   onClick={() => setActiveUser(null)} 
-                  className="sm:hidden text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 flex-shrink-0"
+                  className="sm:hidden text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-lg transition flex items-center gap-1 shrink-0"
                 >
                   <span>←</span>
                   <span>Chats</span>
                 </button>
                 
-                <div className="relative flex-shrink-0">
+                <div className="relative shrink-0">
                   {activeCustomerInfo.profilePic ? (
-                    <img src={activeCustomerInfo.profilePic} alt={activeCustomerInfo.name || 'User'} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-gray-200" />
+                    <img src={activeCustomerInfo.profilePic} alt={activeCustomerInfo.name || 'User'} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-gray-200" />
                   ) : (
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black text-white font-bold flex items-center justify-center text-xs sm:text-sm shadow-xs">
                       {(activeCustomerInfo.name || 'User').charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                  <span className={`absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 border-2 border-white rounded-full ${isUserOnline(activeUser, activeCustomerInfo) ? 'bg-emerald-500 ring-2 ring-emerald-400/40' : 'bg-gray-400'}`}></span>
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-xs sm:text-sm text-gray-900 truncate">
-                    {activeCustomerInfo.name || 'Customer (' + activeUser.substring(0, 6) + ')'}
-                  </h3>
-                  <div className="flex items-center gap-2 text-[10px] text-gray-500 truncate">
-                    {activeCustomerInfo.email && <span className="truncate">{activeCustomerInfo.email}</span>}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-bold text-xs sm:text-sm text-gray-900 truncate max-w-[120px] sm:max-w-xs">
+                      {activeCustomerInfo.name || 'Customer (' + activeUser.substring(0, 6) + ')'}
+                    </h3>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-full shrink-0 ${isUserOnline(activeUser, activeCustomerInfo) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
+                      {isUserOnline(activeUser, activeCustomerInfo) ? 'Active Now' : 'Offline'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] text-gray-500 truncate">
+                    {activeCustomerInfo.email && <span className="truncate hidden xs:inline">{activeCustomerInfo.email}</span>}
                     {activeCustomerInfo.phone && <span className="font-semibold text-gray-700">{activeCustomerInfo.phone}</span>}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button 
                   onClick={() => handleDeleteConversation(activeUser)} 
-                  className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                  className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shrink-0"
                   title="Delete entire conversation"
                 >
                   <span>🗑️</span>
@@ -395,7 +482,7 @@ const Chat = ({ token }) => {
             </div>
             
             {/* Messages Body */}
-            <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gray-50/70 flex flex-col gap-3">
+            <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 bg-gray-50/70 flex flex-col gap-2.5 sm:gap-3">
               {messages.map((msg, index) => (
                 <div 
                   key={index} 
@@ -403,7 +490,7 @@ const Chat = ({ token }) => {
                   onTouchStart={(e) => handleTouchStart(e, msg)}
                   onTouchEnd={handleTouchEnd}
                   onTouchMove={handleTouchEnd}
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-3 text-xs sm:text-sm relative group ${
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-2.5 sm:p-3 text-xs sm:text-sm relative group min-w-0 overflow-hidden ${
                     msg.senderId === 'admin' 
                       ? 'bg-black text-white self-end rounded-br-xs shadow-xs select-none' 
                       : 'bg-white border border-gray-200 text-gray-900 self-start rounded-bl-xs shadow-xs select-none'
@@ -429,9 +516,9 @@ const Chat = ({ token }) => {
                   </button>
 
                   {msg.messageType === 'image' && msg.fileUrl ? (
-                    <img src={msg.fileUrl} alt="attachment" className="rounded-xl mb-2 max-w-full max-h-60 object-cover" />
+                    <img src={msg.fileUrl} alt="attachment" className="rounded-xl mb-1.5 max-w-full max-h-52 sm:max-h-60 object-cover w-full" />
                   ) : null}
-                  {msg.text && <p className="leading-relaxed">{msg.text}</p>}
+                  {msg.text && <p className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.text}</p>}
                 </div>
               ))}
               <div ref={messagesEndRef} />

@@ -95,7 +95,7 @@ const ChatWidget = () => {
       setSocket(newSocket);
       
       newSocket.on('connect', () => {
-        newSocket.emit('register', userId);
+        newSocket.emit('register', { userId, email: userData?.email });
       });
 
       newSocket.on('receiveMessage', (message) => {
@@ -129,9 +129,22 @@ const ChatWidget = () => {
         }
       });
 
-      return () => newSocket.close();
+      // Presence heartbeat: keeps user marked online reliably
+      const sendHeartbeat = () => {
+        axios.post(`${backendUrl || ''}/api/chat/heartbeat`, {
+          userId,
+          email: userData?.email
+        }).catch(() => {});
+      };
+      sendHeartbeat();
+      const hbInterval = setInterval(sendHeartbeat, 25000);
+
+      return () => {
+        clearInterval(hbInterval);
+        newSocket.close();
+      };
     }
-  }, [userId, backendUrl, isOpen]);
+  }, [userId, backendUrl, userData?.email]);
 
   // Polling fallback to ensure messages are updated in real-time even if socket drops
   useEffect(() => {

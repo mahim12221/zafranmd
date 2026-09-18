@@ -1,72 +1,91 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { assets } from '../assets/assets'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { assets } from '../assets/assets';
 
 const Footer = () => {
   return (
-    <div>
-      <div className='flex flex-col sm:grid grid-cols-[3fr_1fr_1fr] gap-14 my-10 mt-32 text-sm'>
-        <div>
-          <Link to='/'><img src={assets.logo} className='mb-4 w-36' alt="Zafran" /></Link>
-          <p className='w-full md:w-4/5 text-gray-600 leading-relaxed'>
-            Zafran is a premier modern electronics and gadget destination founded by <strong>Mahim Afridi</strong>. We curate high-end smart devices, accessories, and tech essentials with uncompromised quality.
+    <footer className="mt-20 pt-16 pb-8 border-t border-zinc-200">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-12 pb-12">
+        {/* Brand Column */}
+        <div className="md:col-span-5 space-y-4">
+          <Link to="/" className="inline-block">
+            <img src={assets.logo} className="w-36 object-contain" alt="Kaviro" />
+          </Link>
+          <p className="text-xs sm:text-sm text-zinc-500 max-w-sm leading-relaxed">
+            Kaviro is a modern tech, gadget and lifestyle brand founded by <strong>Mahim Afridi</strong>. We curate innovative smart devices, fidget toys, EDC tools, and premium everyday gear.
           </p>
-          <div className='mt-4 flex items-center gap-4 text-xs font-semibold text-gray-700'>
+
+          <div className="flex items-center gap-3 pt-2">
             <a
               href="https://www.facebook.com/mahim.afridi.136555"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-black hover:underline"
+              className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-950 hover:text-white flex items-center justify-center text-xs font-bold transition duration-200"
+              title="Facebook"
             >
-              Facebook Profile
+              f
             </a>
-            <span>•</span>
+            <a
+              href="https://wa.me/8801742111888"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-emerald-600 hover:text-white flex items-center justify-center text-xs font-bold transition duration-200"
+              title="WhatsApp"
+            >
+              wa
+            </a>
             <a
               href="https://github.com/mahim12221/zafranmd.git"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-black hover:underline"
+              className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-950 hover:text-white flex items-center justify-center text-xs font-bold transition duration-200"
+              title="GitHub"
             >
-              GitHub Repo
+              gh
             </a>
           </div>
         </div>
 
-        <div>
-          <p className='text-xl font-medium mb-5 text-gray-900'>COMPANY</p>
-          <ul className='flex flex-col gap-2 text-gray-600'>
+        {/* Quick Links */}
+        <div className="md:col-span-3 space-y-3">
+          <h4 className="text-xs font-black uppercase tracking-widest text-zinc-900">EXPLORE</h4>
+          <ul className="space-y-2 text-xs sm:text-sm text-zinc-600">
             <li><Link to="/" className="hover:text-black transition">Home</Link></li>
-            <li><Link to="/about" className="hover:text-black transition">About Us</Link></li>
-            <li><Link to="/collection" className="hover:text-black transition">Collections</Link></li>
-            <li><Link to="/contact" className="hover:text-black transition">Contact & Support</Link></li>
+            <li><Link to="/collection" className="hover:text-black transition">All Collections</Link></li>
+            <li><Link to="/about" className="hover:text-black transition">Our Story</Link></li>
+            <li><Link to="/contact" className="hover:text-black transition">Contact &amp; Concierge</Link></li>
             <li><Link to="/privacy-policy" className="hover:text-black transition">Privacy Policy</Link></li>
           </ul>
         </div>
 
-        <div>
-          <p className='text-xl font-medium mb-5 text-gray-900'>GET IN TOUCH</p>
-          <ul className='flex flex-col gap-2 text-gray-600'>
-            <li className='font-medium text-gray-800'>Founder: Mahim Afridi</li>
-            <li>
-              <a href="tel:01880172859" className="hover:text-black transition">01880172859</a> /{' '}
-              <a href="tel:01742111888" className="hover:text-black transition">01742111888</a>
-            </li>
-            <li>
-              <a href="mailto:contact@zafran.com" className="hover:text-black transition">contact@zafran.com</a>
-            </li>
-            <li className="text-xs text-gray-500">Dhaka, Bangladesh</li>
-          </ul>
+        {/* Contact Info */}
+        <div className="md:col-span-4 space-y-3">
+          <h4 className="text-xs font-black uppercase tracking-widest text-zinc-900">CUSTOMER CARE</h4>
+          <div className="space-y-2 text-xs sm:text-sm text-zinc-600">
+            <p className="font-semibold text-zinc-900">Founder: Mahim Afridi</p>
+            <p>
+              Direct Hotline:{' '}
+              <a href="tel:01880172859" className="font-bold text-zinc-900 hover:underline">01880172859</a> /{' '}
+              <a href="tel:01742111888" className="font-bold text-zinc-900 hover:underline">01742111888</a>
+            </p>
+            <p>
+              Email:{' '}
+              <a href="mailto:contact@kaviro.com" className="hover:underline text-zinc-900">contact@kaviro.com</a>
+            </p>
+            <p className="text-xs text-zinc-400">Dhaka, Bangladesh • Fast Delivery Across All 64 Districts</p>
+          </div>
         </div>
       </div>
 
-      <div>
-        <hr className="border-gray-200" />
-        <p className='py-5 text-xs text-center text-gray-500'>
-          Copyright © 2025-2026 Zafran (zafran.com) — Founded & Operated by Mahim Afridi. All rights reserved.
+      <div className="pt-8 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
+        <p>© 2026 KAVIRO. All rights reserved. Created &amp; Operated by Mahim Afridi.</p>
+        <p className="flex items-center gap-2 font-medium text-zinc-500">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+          <span>Authentic Fashion Quality</span>
         </p>
       </div>
-    </div>
-  )
-}
+    </footer>
+  );
+};
 
 export default Footer;

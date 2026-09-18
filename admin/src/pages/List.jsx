@@ -205,54 +205,64 @@ const List = ({ token }) => {
           <div 
             key={index}
             onClick={() => openProductModal(item)}
-            className='grid grid-cols-[1fr_2fr_1.5fr_0.8fr] md:grid-cols-[1fr_2.5fr_1fr_1fr_1.5fr_1.2fr] items-center gap-2 py-2.5 px-3 border border-gray-200 rounded-xl text-sm bg-white hover:bg-gray-50 transition cursor-pointer group shadow-2xs'
+            className='p-3 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition cursor-pointer group shadow-2xs md:grid md:grid-cols-[1fr_2.5fr_1fr_1fr_1.5fr_1.2fr] md:items-center md:gap-2 md:py-2.5 md:px-3 text-sm min-w-0 w-full overflow-hidden'
           >
-            <img className='w-12 h-12 object-cover rounded-lg border border-gray-200 group-hover:scale-105 transition' src={item.images?.[0] || item.image?.[0] || 'placeholder.jpg'} alt={item.name} />
-            <div>
-              <p className='font-bold text-gray-900 group-hover:text-blue-600 transition flex items-center gap-1.5'>
-                <span>{item.name}</span>
-                <span className='text-[10px] bg-gray-100 text-gray-600 font-semibold px-1.5 py-0.5 rounded'>👁️ View</span>
-              </p>
-              {item.outOfStock && <span className='md:hidden text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded'>Out of Stock</span>}
-            </div>
-            <p className='text-gray-600 text-xs'>{item.category}</p>
-            <div>
-              <p className='font-bold text-gray-900'>{currency}{item.price}</p>
-              {item.discount > 0 && <span className='text-[10px] font-bold text-red-500'>-{item.discount}% Off</span>}
+            <div className="flex items-start gap-3 min-w-0 md:contents">
+              <img className='w-14 h-14 md:w-12 md:h-12 object-cover rounded-lg border border-gray-200 group-hover:scale-105 transition shrink-0' src={item.images?.[0] || item.image?.[0] || 'placeholder.jpg'} alt={item.name} />
+              <div className="min-w-0 flex-1">
+                <p className='font-bold text-gray-900 group-hover:text-blue-600 transition flex items-center gap-1.5 flex-wrap'>
+                  <span className="truncate">{item.name}</span>
+                  <span className='text-[10px] bg-gray-100 text-gray-600 font-semibold px-1.5 py-0.5 rounded shrink-0'>👁️ View</span>
+                </p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+                  <span className="text-gray-500">{item.category}</span>
+                  <span className="text-gray-300 md:hidden">•</span>
+                  <span className="font-bold text-gray-900 md:hidden">{currency}{item.price}</span>
+                  {item.discount > 0 && <span className='text-[10px] font-bold text-red-500 md:hidden'>-{item.discount}% Off</span>}
+                </div>
+                {item.outOfStock && <span className='md:hidden inline-block mt-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-200'>Out of Stock</span>}
+              </div>
+              <p className='hidden md:block text-gray-600 text-xs truncate'>{item.category}</p>
+              <div className="hidden md:block">
+                <p className='font-bold text-gray-900'>{currency}{item.price}</p>
+                {item.discount > 0 && <span className='text-[10px] font-bold text-red-500'>-{item.discount}% Off</span>}
+              </div>
             </div>
             
-            {/* Stock Toggle Button */}
-            <div className='flex items-center justify-center' onClick={e => e.stopPropagation()}>
-              <button
-                type="button"
-                onClick={(e) => toggleStock(item._id, !item.outOfStock, e)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-full transition shadow-2xs cursor-pointer flex items-center gap-1.5 ${
-                  item.outOfStock 
-                    ? 'bg-red-50 text-red-700 border border-red-300 hover:bg-red-100' 
-                    : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                }`}
-                title="Click to toggle product stock availability"
-              >
-                <span className={`w-2 h-2 rounded-full ${item.outOfStock ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
-                <span>{item.outOfStock ? 'Out of Stock' : 'In Stock'}</span>
-              </button>
-            </div>
+            <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-gray-100 md:border-t-0 md:mt-0 md:pt-0 md:contents">
+              {/* Stock Toggle Button */}
+              <div className='flex items-center md:justify-center shrink-0' onClick={e => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={(e) => toggleStock(item._id, !item.outOfStock, e)}
+                  className={`px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-full transition shadow-2xs cursor-pointer flex items-center gap-1.5 ${
+                    item.outOfStock 
+                      ? 'bg-red-50 text-red-700 border border-red-300 hover:bg-red-100' 
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                  }`}
+                  title="Click to toggle product stock availability"
+                >
+                  <span className={`w-2 h-2 rounded-full ${item.outOfStock ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                  <span>{item.outOfStock ? 'Out of Stock' : 'In Stock'}</span>
+                </button>
+              </div>
 
-            <div className='flex items-center justify-center gap-2' onClick={e => e.stopPropagation()}>
-              <button 
-                onClick={() => openProductModal(item)} 
-                className='text-blue-600 hover:text-blue-800 font-bold px-2 py-1 hover:bg-blue-50 rounded transition text-xs'
-                title="View Details & Edit"
-              >
-                ✏️ Edit
-              </button>
-              <button 
-                onClick={(e) => removeProduct(item._id, e)} 
-                className='text-red-500 hover:text-red-700 font-bold px-2 py-1 hover:bg-red-50 rounded transition text-xs'
-                title="Delete Product"
-              >
-                🗑️ Delete
-              </button>
+              <div className='flex items-center justify-end gap-1.5 sm:gap-2 shrink-0' onClick={e => e.stopPropagation()}>
+                <button 
+                  onClick={() => openProductModal(item)} 
+                  className='text-blue-600 hover:text-blue-800 font-bold px-2 py-1 hover:bg-blue-50 rounded transition text-xs border border-blue-200'
+                  title="View Details & Edit"
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  onClick={(e) => removeProduct(item._id, e)} 
+                  className='text-red-500 hover:text-red-700 font-bold px-2 py-1 hover:bg-red-50 rounded transition text-xs'
+                  title="Delete Product"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -359,13 +369,13 @@ const List = ({ token }) => {
                 </div>
 
                 {/* Add New Color Input */}
-                <div className='flex flex-col sm:flex-row gap-2'>
+                <div className='flex flex-col sm:flex-row gap-2 w-full min-w-0'>
                   <input 
                     type="text" 
                     value={newColorInput}
                     onChange={(e) => setNewColorInput(e.target.value)}
                     placeholder="Add color (e.g. Navy, Rose Gold)"
-                    className='flex-1 border border-gray-300 rounded-lg p-2.5 sm:p-2 text-sm sm:text-xs bg-white focus:outline-none focus:border-black'
+                    className='flex-1 min-w-0 w-full border border-gray-300 rounded-lg p-2.5 sm:p-2 text-sm sm:text-xs bg-white focus:outline-none focus:border-black'
                   />
                   <button 
                     type="button"

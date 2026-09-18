@@ -8,8 +8,8 @@ const NavBar = ({ token, setToken }) => {
   const [adminData, setAdminData] = useState(() => {
     const saved = localStorage.getItem('adminProfile');
     return saved ? JSON.parse(saved) : {
-      name: 'Zafran Super Admin',
-      email: 'admin@zafran.com',
+      name: 'Kaviro Super Admin',
+      email: 'admin@kaviro.com',
       title: 'Executive Store Manager',
       phone: '+880 1700-000000',
       profilePic: ''

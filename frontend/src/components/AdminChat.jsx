@@ -20,6 +20,39 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const isUserOnline = (userIdToCheck, customerObj) => {
+    if (!onlineUsers || !Array.isArray(onlineUsers) || onlineUsers.length === 0) return false;
+    const targetId = String(userIdToCheck || '').trim().toLowerCase();
+    const custObjId = String(customerObj?._id || '').trim().toLowerCase();
+    const custEmail = String(customerObj?.email || '').trim().toLowerCase();
+
+    return onlineUsers.some(item => {
+      const val = String(item || '').trim().toLowerCase();
+      if (!val || val === 'admin') return false;
+      return (targetId && val === targetId) || 
+             (custObjId && val === custObjId) || 
+             (custEmail && val === custEmail);
+    });
+  };
+
+  const fetchOnlineUsers = async () => {
+    try {
+      const res = await axios.get(`${backendUrl || ''}/api/chat/online-users`);
+      if (res.data && res.data.success && Array.isArray(res.data.onlineUsers)) {
+        setOnlineUsers(res.data.onlineUsers);
+      }
+    } catch (e) {
+      // quiet fallback
+    }
+  };
+
+  useEffect(() => {
+    fetchOnlineUsers();
+    const interval = setInterval(fetchOnlineUsers, 4000);
+    return () => clearInterval(interval);
+  }, [backendUrl]);
 
   // Sync active user with context
   useEffect(() => {
@@ -333,40 +366,87 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
   const activeUserSpent = activeUserOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
 
   return (
-    <div className="flex flex-col sm:flex-row h-[calc(100vh-200px)] min-h-[520px] max-h-[820px] border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-xs">
+    <div className="flex flex-col sm:flex-row h-[75vh] sm:h-[calc(100vh-200px)] min-h-[480px] max-h-[860px] border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-xs w-full min-w-0">
       {/* Sidebar: Conversations (Messenger Style) */}
-      <div className={`w-full sm:w-80 border-r border-gray-200 bg-gray-50/50 flex-col shrink-0 ${activeUser ? 'hidden sm:flex' : 'flex'}`}>
-        <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="font-bold text-base text-gray-900">Live Chats</h2>
-            <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{conversations.length}</span>
+      <div className={`w-full sm:w-80 border-r border-gray-200 bg-gray-50/50 flex flex-col shrink-0 h-full min-h-0 overflow-hidden ${activeUser ? 'hidden sm:flex' : 'flex'}`}>
+        <div className="p-3.5 bg-white border-b border-gray-200 shrink-0">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold text-base text-gray-900">Live Chats</h2>
+              <span className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{conversations.length}</span>
+            </div>
+            <button 
+              onClick={() => { fetchConversations(); fetchOnlineUsers(); }}
+              className="text-xs text-gray-500 hover:text-black font-semibold cursor-pointer"
+            >
+              Refresh
+            </button>
           </div>
-          <button 
-            onClick={fetchConversations}
-            className="text-xs text-gray-500 hover:text-black font-semibold cursor-pointer"
-          >
-            Refresh
-          </button>
+
+          {/* Quick search filter to find any user instantly */}
+          <div className="relative">
+            <input 
+              type="text"
+              placeholder="Search user name, email or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-gray-100/90 border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:bg-white transition"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-          {conversations.length === 0 ? (
-            <div className="text-center py-16 px-4">
-              <p className="text-3xl mb-2">💬</p>
-              <p className="text-xs font-semibold text-gray-500">No conversations yet</p>
-              <p className="text-[11px] text-gray-400 mt-1">Customer chats will appear here in real-time.</p>
-            </div>
-          ) : (
-            conversations.map(conv => {
+        {/* Scrollable conversation items */}
+        <div 
+          className="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-100 overscroll-contain"
+          style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}
+        >
+          {(() => {
+            const filteredConvs = conversations.filter(conv => {
+              if (!searchTerm.trim()) return true;
+              const custId = conv.participants.find(p => p !== 'admin');
+              const cust = getCustomerObj(custId);
+              const q = searchTerm.toLowerCase();
+              return (
+                (cust.name && cust.name.toLowerCase().includes(q)) ||
+                (cust.email && cust.email.toLowerCase().includes(q)) ||
+                (custId && custId.toLowerCase().includes(q)) ||
+                (conv.lastMessage && conv.lastMessage.toLowerCase().includes(q))
+              );
+            });
+
+            if (filteredConvs.length === 0) {
+              return (
+                <div className="text-center py-16 px-4">
+                  <p className="text-3xl mb-2">💬</p>
+                  <p className="text-xs font-semibold text-gray-500">
+                    {searchTerm ? 'No matching users found' : 'No conversations yet'}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    {searchTerm ? 'Try a different search term' : 'Customer chats will appear here in real-time.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return filteredConvs.map(conv => {
               const custId = conv.participants.find(p => p !== 'admin');
               const cust = getCustomerObj(custId);
               const isActive = activeUser === custId;
+              const online = isUserOnline(custId, cust);
               
               return (
                 <div 
                   key={conv._id} 
                   onClick={() => setActiveUser(custId)}
-                  className={`p-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-100/80 transition ${isActive ? 'bg-sky-50/70 border-l-4 border-sky-400 font-medium' : ''}`}
+                  className={`p-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-100/80 transition select-none ${isActive ? 'bg-sky-50/70 border-l-4 border-sky-400 font-medium' : ''}`}
                 >
                   <div className="relative shrink-0">
                     {cust.profilePic ? (
@@ -376,22 +456,29 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                         {cust.name ? cust.name.charAt(0).toUpperCase() : 'C'}
                       </div>
                     )}
-                    <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${onlineUsers.includes(custId) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                    <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${online ? 'bg-emerald-500 ring-2 ring-emerald-400/30' : 'bg-gray-400'}`}></span>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-1">
                       <p className="text-xs font-bold text-gray-900 truncate">{cust.name}</p>
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${online ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-500'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                        {online ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
+                    {cust.email && <p className="text-[10px] text-gray-400 truncate">{cust.email}</p>}
+                    <div className="flex items-center justify-between text-gray-500 text-xs mt-0.5">
+                      <p className="truncate mr-2">{conv.lastMessage || 'Sent an attachment'}</p>
                       {conv.updatedAt && (
-                        <span className="text-[10px] text-gray-400">{new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="text-[10px] text-gray-400 shrink-0">{new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{conv.lastMessage || 'Sent an attachment'}</p>
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
       </div>
 
@@ -400,12 +487,12 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
         {activeUser && activeCustomer ? (
           <>
             {/* Header */}
-            <div className="p-3 px-4 sm:px-5 border-b border-gray-200 bg-white shadow-2xs flex items-center justify-between z-10 shrink-0">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
+            <div className="p-2.5 sm:p-3 px-3 sm:px-5 border-b border-gray-200 bg-white shadow-2xs flex items-center justify-between z-10 shrink-0 gap-2 min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <button 
                   type="button"
                   onClick={() => { setActiveUser(null); if (setSelectedChatUser) setSelectedChatUser(null); }} 
-                  className="sm:hidden text-gray-500 hover:text-black shrink-0 p-1 rounded-lg hover:bg-gray-100 transition"
+                  className="sm:hidden text-gray-500 hover:text-black shrink-0 p-1 rounded-lg hover:bg-gray-100 transition flex items-center justify-center"
                   title="Back to conversations"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
@@ -421,14 +508,17 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                       {activeCustomer.name ? activeCustomer.name.charAt(0).toUpperCase() : 'C'}
                     </div>
                   )}
-                  <span className={`absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 border-2 border-white rounded-full ${onlineUsers.includes(activeUser) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                  <span className={`absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 border-2 border-white rounded-full ${isUserOnline(activeUser, activeCustomer) ? 'bg-emerald-500 ring-2 ring-emerald-400/40' : 'bg-gray-400'}`}></span>
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-xs sm:text-sm text-gray-900 truncate leading-tight max-w-[110px] xs:max-w-[150px] sm:max-w-xs">{activeCustomer.name}</h3>
-                  <p className={`text-[10px] sm:text-[11px] font-medium flex items-center gap-1 truncate ${onlineUsers.includes(activeUser) ? 'text-emerald-600' : 'text-gray-500'}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${onlineUsers.includes(activeUser) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
-                    <span className="truncate">{onlineUsers.includes(activeUser) ? 'Active Now' : 'Offline'} {activeCustomer.email ? `• ${activeCustomer.email}` : ''}</span>
+                  <h3 className="font-bold text-xs sm:text-sm text-gray-900 truncate leading-tight">{activeCustomer.name}</h3>
+                  <p className={`text-[10px] sm:text-[11px] font-medium flex items-center gap-1.5 truncate ${isUserOnline(activeUser, activeCustomer) ? 'text-emerald-600' : 'text-gray-500'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isUserOnline(activeUser, activeCustomer) ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                    <span className="truncate">{isUserOnline(activeUser, activeCustomer) ? 'Active Now' : 'Offline'}</span>
+                    {activeCustomer.email && (
+                      <span className="hidden sm:inline text-gray-400 font-normal truncate">• {activeCustomer.email}</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -526,10 +616,10 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                   return (
                     <div 
                       key={msg._id || index} 
-                      className={`flex items-end gap-2 max-w-[80%] ${isAdmin ? 'self-end flex-row-reverse' : 'self-start'}`}
+                      className={`flex items-end gap-1.5 sm:gap-2 max-w-[85%] sm:max-w-[75%] min-w-0 ${isAdmin ? 'self-end flex-row-reverse' : 'self-start'}`}
                     >
                       {!isAdmin && (
-                        <div className="w-7 h-7 rounded-full shrink-0 overflow-hidden mb-0.5">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full shrink-0 overflow-hidden mb-0.5">
                           {activeCustomer.profilePic ? (
                             <img src={activeCustomer.profilePic} alt={activeCustomer.name} className="w-full h-full object-cover" />
                           ) : (
@@ -542,7 +632,7 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
 
                       <div 
                         onContextMenu={(e) => handleContextMenu(e, msg)}
-                        className={`rounded-2xl p-3 text-sm shadow-xs relative ${
+                        className={`rounded-2xl p-2.5 sm:p-3 text-xs sm:text-sm shadow-xs relative min-w-0 max-w-full overflow-hidden ${
                           isAdmin 
                             ? 'bg-black text-white rounded-br-xs cursor-context-menu' 
                             : 'bg-white text-gray-900 border border-gray-100 rounded-bl-xs'
@@ -551,13 +641,13 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                         {msg.messageType === 'image' && msg.fileUrl && (
                           <div 
                             onClick={() => setPreviewImage(msg.fileUrl)}
-                            className="relative group cursor-pointer overflow-hidden rounded-xl mb-2 max-w-full block"
+                            className="relative group cursor-pointer overflow-hidden rounded-xl mb-1.5 max-w-full block"
                             title="Click to zoom in full panel"
                           >
                             <img 
                               src={msg.fileUrl} 
                               alt="attachment" 
-                              className="rounded-xl max-w-full max-h-60 object-cover group-hover:scale-105 transition duration-200" 
+                              className="rounded-xl max-w-full max-h-52 sm:max-h-60 object-cover group-hover:scale-105 transition duration-200 w-full" 
                             />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1.5 text-white text-xs font-bold backdrop-blur-[2px] rounded-xl">
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
@@ -567,7 +657,7 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                             </div>
                           </div>
                         )}
-                        {msg.text && <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
+                        {msg.text && <p className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.text}</p>}
                         
                         <div className={`text-[9px] mt-1 text-right ${isAdmin ? 'text-gray-400' : 'text-gray-400'}`}>
                           {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}

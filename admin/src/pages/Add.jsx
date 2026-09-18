@@ -14,10 +14,10 @@ const Add = ({token}) => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [discount, setDiscount] = useState("0");
-  const [category, setCategory] = useState("Men")
-  const [subCategory, setSubCategoy] = useState("Topwear")
+  const [category, setCategory] = useState("Gadgets")
+  const [subCategory, setSubCategoy] = useState("Fidget Toys")
   const [bestseller, setBestseller] = useState(false)
-  const [sizes, setSizes] = useState([])
+  const [sizes, setSizes] = useState(["Standard"])
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
@@ -93,18 +93,27 @@ const Add = ({token}) => {
       <div>
         <p className='mb-2'>Product category</p>
         <select onChange={(e)=> setCategory(e.target.value)} value={category} className='w-full px-3 py-2'>
-          <option value="Men">Men</option>
-          <option value="Women">Women</option>
-          <option value="Kids">Kids</option>
+          <option value="Gadgets">Gadgets</option>
+          <option value="Fidget &amp; EDC">Fidget &amp; EDC</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Smart Gear">Smart Gear</option>
+          <option value="Accessories">Accessories</option>
         </select>
       </div>
 
       <div>
         <p className='mb-2'>Sub category</p>
         <select onChange={(e)=> setSubCategoy(e.target.value)} value={subCategory} className='w-full px-3 py-2'>
-          <option value="Topwear">Topwear</option>
-          <option value="Bottomwear">Bottomwear</option>
-          <option value="Winterwear">Winterwear</option>
+          <option value="Fidget Toys">Fidget Toys</option>
+          <option value="EDC Gear">EDC Gear</option>
+          <option value="Audio">Audio</option>
+          <option value="Wearables">Wearables</option>
+          <option value="Desk Gadgets">Desk Gadgets</option>
+          <option value="Gaming">Gaming</option>
+          <option value="Power &amp; Charging">Power &amp; Charging</option>
+          <option value="Smart Devices">Smart Devices</option>
+          <option value="Accessories">Accessories</option>
+          <option value="Others">Others</option>
         </select>
       </div>
 
@@ -120,23 +129,18 @@ const Add = ({token}) => {
 
     <div>
       <div>
-        <p className='mb-2'>Product Sizes</p>
-        <div className='flex gap-3'>
-          <div onClick={()=>setSizes(prev => prev.includes("S") ? prev.filter(item => item !== "S") : [...prev, "S"])}>
-            <p className={`${sizes.includes("S") ? "bg-pink-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>S</p>
-          </div>
-          <div onClick={()=>setSizes(prev => prev.includes("M") ? prev.filter(item => item !== "M") : [...prev, "M"])}>
-            <p className={`${sizes.includes("M") ? "bg-pink-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>M</p>
-          </div>
-          <div onClick={()=>setSizes(prev => prev.includes("L") ? prev.filter(item => item !== "L") : [...prev, "L"])}>
-            <p className={`${sizes.includes("L") ? "bg-pink-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>L</p>
-          </div>
-          <div onClick={()=>setSizes(prev => prev.includes("XL") ? prev.filter(item => item !== "XL") : [...prev, "XL"])}>
-            <p className={`${sizes.includes("XL") ? "bg-pink-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>XL</p>
-          </div>
-          <div onClick={()=>setSizes(prev => prev.includes("XXL") ? prev.filter(item => item !== "XXL") : [...prev, "XXL"])}>
-            <p className={`${sizes.includes("XXL") ? "bg-pink-100" : "bg-slate-200"} px-3 py-1 cursor-pointer`}>XXL</p>
-          </div>
+        <p className='mb-2'>Product Editions / Variants</p>
+        <div className='flex flex-wrap gap-3'>
+          {["Standard", "Pro Edition", "Deluxe Pack", "Titanium Edition"].map((ver) => (
+            <div 
+              key={ver}
+              onClick={()=>setSizes(prev => prev.includes(ver) ? prev.filter(item => item !== ver) : [...prev, ver])}
+            >
+              <p className={`${sizes.includes(ver) ? "bg-black text-white" : "bg-slate-200 text-gray-800"} px-3 py-1 cursor-pointer rounded-lg text-xs font-semibold`}>
+                {ver}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

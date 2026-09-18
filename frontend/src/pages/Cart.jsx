@@ -78,11 +78,11 @@ const Cart = () => {
             <button 
               onClick={() => {
                 if (cartData.length === 0) {
-                  toast.error('আপনার কার্ট খালি!');
+                  toast.error('Your cart is empty!');
                   return;
                 }
                 if (!token && !localStorage.getItem('token')) {
-                  toast.info('অর্ডার সম্পন্ন করতে অনুগ্রহ করে আগে লগইন বা সাইন আপ করুন');
+                  toast.info('Please log in or sign up to complete your order');
                   navigate('/login?redirect=/place-order');
                 } else {
                   navigate('/place-order');
