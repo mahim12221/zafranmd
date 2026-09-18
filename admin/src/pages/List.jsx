@@ -359,18 +359,18 @@ const List = ({ token }) => {
                 </div>
 
                 {/* Add New Color Input */}
-                <div className='flex gap-2'>
+                <div className='flex flex-col sm:flex-row gap-2'>
                   <input 
                     type="text" 
                     value={newColorInput}
                     onChange={(e) => setNewColorInput(e.target.value)}
-                    placeholder="Add color (e.g. Navy, Rose Gold, Titanium)"
-                    className='flex-1 border border-gray-300 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-black'
+                    placeholder="Add color (e.g. Navy, Rose Gold)"
+                    className='flex-1 border border-gray-300 rounded-lg p-2.5 sm:p-2 text-sm sm:text-xs bg-white focus:outline-none focus:border-black'
                   />
                   <button 
                     type="button"
                     onClick={handleAddColor}
-                    className='bg-black text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-neutral-800 cursor-pointer transition'
+                    className='w-full sm:w-auto bg-black text-white px-4 py-2.5 sm:py-2 rounded-lg text-sm sm:text-xs font-bold hover:bg-neutral-800 cursor-pointer transition shrink-0'
                   >
                     + Add Color
                   </button>
