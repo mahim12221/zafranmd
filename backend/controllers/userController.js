@@ -547,7 +547,7 @@ const deleteUser = async (req, res) => {
     }
 }
 
-export { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, mockUsers, resetPassword };
+export { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, mockUsers, resetPassword, googleLogin };
 // Reset password for demo purposes
 const resetPassword = async (req, res) => {
     try {
@@ -581,6 +581,54 @@ const resetPassword = async (req, res) => {
             }
             existingUser.password = hashedPassword;
             return res.json({ success: true, message: "Password reset successful!" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Google Login
+const googleLogin = async (req, res) => {
+    try {
+        const { email, name, profilePic, uid } = req.body;
+        if (!email) {
+            return res.json({ success: false, message: "Email is required from Google login." });
+        }
+
+        if (mongoose.connection.readyState === 1) {
+            let user = await userModel.findOne({ email });
+            if (!user) {
+                // Create user if not exists
+                // We use a random dummy password since they authenticate via Google
+                const dummyPassword = uid + Math.random().toString(36).slice(-8);
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(dummyPassword, salt);
+                
+                const newUser = new userModel({
+                    name: name || email.split('@')[0],
+                    email,
+                    password: hashedPassword,
+                });
+                user = await newUser.save();
+            }
+            const token = createToken(user._id);
+            res.json({ success: true, token, user });
+        } else {
+            // Mock fallback
+            let existingUser = Array.from(mockUsers.values()).find(u => u.email === email);
+            if (!existingUser) {
+                const newId = new mongoose.Types.ObjectId().toString();
+                existingUser = {
+                    _id: newId,
+                    name: name || email.split('@')[0],
+                    email,
+                    cartData: {}
+                };
+                mockUsers.set(newId, existingUser);
+            }
+            const token = createToken(existingUser._id);
+            res.json({ success: true, token, user: existingUser });
         }
     } catch (error) {
         console.log(error);

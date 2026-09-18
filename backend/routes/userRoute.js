@@ -1,5 +1,5 @@
 import express from 'express'
-import { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, resetPassword } from '../controllers/userController.js'
+import { googleLogin, loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, resetPassword } from '../controllers/userController.js'
 import authUser from '../middleware/auth.js';
 import adminAuth from '../middleware/adminAuth.js';
 import upload from '../middleware/multer.js';
@@ -22,3 +22,5 @@ userRouter.post('/admin/delete-user', adminAuth, deleteUser)
 
 export default userRouter;
 userRouter.post('/reset-password', resetPassword)
+
+userRouter.post('/google-login', googleLogin)
