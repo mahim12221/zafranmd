@@ -19,6 +19,7 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   // Sync active user with context
   useEffect(() => {
@@ -138,6 +139,10 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
       
       newSocket.on('connect', () => {
         newSocket.emit('register', 'admin');
+      });
+
+      newSocket.on('onlineUsers', (usersList) => {
+        setOnlineUsers(usersList);
       });
 
       newSocket.on('receiveMessage', (message) => {
@@ -371,7 +376,7 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                         {cust.name ? cust.name.charAt(0).toUpperCase() : 'C'}
                       </div>
                     )}
-                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                    <span className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${onlineUsers.includes(custId) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -416,14 +421,14 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
                       {activeCustomer.name ? activeCustomer.name.charAt(0).toUpperCase() : 'C'}
                     </div>
                   )}
-                  <span className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                  <span className={`absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 border-2 border-white rounded-full ${onlineUsers.includes(activeUser) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-xs sm:text-sm text-gray-900 truncate leading-tight max-w-[110px] xs:max-w-[150px] sm:max-w-xs">{activeCustomer.name}</h3>
-                  <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium flex items-center gap-1 truncate">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span className="truncate">Active Now {activeCustomer.email ? `• ${activeCustomer.email}` : ''}</span>
+                  <p className={`text-[10px] sm:text-[11px] font-medium flex items-center gap-1 truncate ${onlineUsers.includes(activeUser) ? 'text-emerald-600' : 'text-gray-500'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${onlineUsers.includes(activeUser) ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                    <span className="truncate">{onlineUsers.includes(activeUser) ? 'Active Now' : 'Offline'} {activeCustomer.email ? `• ${activeCustomer.email}` : ''}</span>
                   </p>
                 </div>
               </div>
@@ -599,8 +604,8 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
             )}
 
             {/* Input Form */}
-            <form onSubmit={sendMessage} className="p-3 bg-white border-t border-gray-200 flex gap-2 items-center">
-              <label className="cursor-pointer text-gray-500 hover:text-black p-2 rounded-xl hover:bg-gray-100 transition shrink-0" title="Attach Image">
+            <form onSubmit={sendMessage} className="p-2 sm:p-3 bg-white border-t border-gray-200 flex gap-1.5 sm:gap-2 items-center shrink-0">
+              <label className="cursor-pointer text-gray-500 hover:text-black p-1.5 sm:p-2 rounded-xl hover:bg-gray-100 transition shrink-0" title="Attach Image">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                 </svg>
@@ -609,17 +614,17 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
               
               <input 
                 type="text" 
-                placeholder={editingMessage ? "Editing message..." : "Type reply as Zafran Admin..."} 
+                placeholder={editingMessage ? "Editing..." : "Type reply..."} 
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                className="flex-1 bg-gray-100 rounded-xl px-4 py-2.5 text-xs text-gray-900 outline-none border border-transparent focus:border-gray-300 transition"
+                className="flex-1 min-w-0 bg-gray-100 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-900 outline-none border border-transparent focus:border-gray-300 transition"
               />
 
               {editingMessage && (
                 <button 
                   type="button" 
                   onClick={() => { setEditingMessage(null); setInputText(''); }}
-                  className="text-xs text-gray-500 hover:text-black font-semibold px-2"
+                  className="text-[10px] sm:text-xs text-gray-500 hover:text-black font-semibold px-1 sm:px-2 shrink-0"
                 >
                   Cancel
                 </button>
@@ -627,7 +632,7 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
 
               <button 
                 type="submit" 
-                className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-neutral-800 transition active:scale-95 cursor-pointer"
+                className="bg-black text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-bold hover:bg-neutral-800 transition active:scale-95 cursor-pointer shrink-0"
               >
                 Send
               </button>

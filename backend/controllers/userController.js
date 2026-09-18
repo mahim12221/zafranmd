@@ -547,4 +547,43 @@ const deleteUser = async (req, res) => {
     }
 }
 
-export { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, mockUsers };
+export { loginUser, registerUser, adminLogin, getAdminProfile, updateAdminProfile, getUserProfile, updateUserProfile, getAllUsers, deleteUser, mockUsers, resetPassword };
+// Reset password for demo purposes
+const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+        
+        if (!email || !newPassword) {
+            return res.json({ success: false, message: "Please provide both email and new password." });
+        }
+        
+        if (newPassword.length < 8) {
+            return res.json({ success: false, message: "Please enter a strong password (min 8 chars)" });
+        }
+        
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        
+        if (mongoose.connection.readyState === 1) {
+            const user = await userModel.findOne({ email });
+            if (!user) {
+                return res.json({ success: false, message: "No account found with that email." });
+            }
+            
+            user.password = hashedPassword;
+            await user.save();
+            return res.json({ success: true, message: "Password reset successful!" });
+        } else {
+            // Mock fallback
+            const existingUser = Array.from(mockUsers.values()).find(u => u.email === email);
+            if (!existingUser) {
+                return res.json({ success: false, message: "No account found with that email." });
+            }
+            existingUser.password = hashedPassword;
+            return res.json({ success: true, message: "Password reset successful!" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}

@@ -20,6 +20,7 @@ const ChatWidget = () => {
   const [hasUnread, setHasUnread] = useState(false);
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, msg: null });
   const [previewImage, setPreviewImage] = useState(null);
+  const [lastUnreadMessage, setLastUnreadMessage] = useState(null);
   const touchTimerRef = useRef(null);
 
   useEffect(() => {
@@ -73,20 +74,23 @@ const ChatWidget = () => {
 
   // Decode user ID from token or fetch profile
   useEffect(() => {
-    if (token) {
-      axios.post(`${backendUrl}/api/user/profile`, { userId: 'not_used' }, { headers: { token } })
-        .then(res => {
-          if (res.data.success && res.data.user) {
-            setUserId(res.data.user._id);
-          }
-        }).catch(err => console.log(err));
+    if (userData && userData._id) {
+       setUserId(userData._id);
+    } else if (token) {
+       // Fallback fetch if userData is delayed
+       axios.get(`${backendUrl}/api/user/profile`, { headers: { token } })
+         .then(res => {
+           if (res.data.success && res.data.user) {
+             setUserId(res.data.user._id);
+           }
+         }).catch(err => console.log(err));
     } else {
-        setUserId(null);
+       setUserId(null);
     }
-  }, [token, backendUrl]);
+  }, [userData, token, backendUrl]);
 
   useEffect(() => {
-    if (userId && backendUrl) {
+    if (userId && typeof backendUrl === 'string') {
       const newSocket = io(backendUrl);
       setSocket(newSocket);
       
@@ -101,8 +105,16 @@ const ChatWidget = () => {
         });
         // Show notification if closed
         if (!isOpen) {
-          toast.info(`New message from Admin`);
           setHasUnread(true);
+          setLastUnreadMessage(message.text || '📷 Sent an attachment');
+          
+          // Optionally play sound or toast
+          // toast.info(`New message from Admin`);
+        } else {
+          // If open, mark as read
+          if (message.senderId === 'admin') {
+             localStorage.setItem('lastSeenAdminMsgId', message._id);
+          }
         }
       });
       
@@ -123,27 +135,57 @@ const ChatWidget = () => {
 
   // Polling fallback to ensure messages are updated in real-time even if socket drops
   useEffect(() => {
-    if (isOpen && userId) {
+    if (userId && typeof backendUrl === 'string') {
       const fetchMsgList = () => {
         axios.get(`${backendUrl}/api/chat/messages/${userId}/admin`)
           .then(res => {
             if (res.data.success) {
-              setMessages(res.data.messages || []);
+              const msgs = res.data.messages || [];
+              
+              // Only update if there's a difference to avoid unnecessary re-renders
+              setMessages(prev => {
+                if (prev.length !== msgs.length) return msgs;
+                return prev;
+              });
+              
+              if (msgs.length > 0) {
+                 const lastMsg = msgs[msgs.length - 1];
+                 if (lastMsg.senderId === 'admin') {
+                     const lastSeen = localStorage.getItem('lastSeenAdminMsgId');
+                     if (lastSeen !== lastMsg._id && !isOpen) {
+                         setHasUnread(true);
+                         setLastUnreadMessage(lastMsg.text || '📷 Sent an attachment');
+                     }
+                 }
+              }
             }
           }).catch(err => console.log(err));
       };
 
       fetchMsgList();
-      const interval = setInterval(fetchMsgList, 3000);
-      return () => clearInterval(interval);
+      
+      // Always poll, but slightly slower if closed to save resources
+      const interval = setInterval(fetchMsgList, isOpen ? 3000 : 8000);
+      
+      return () => {
+         clearInterval(interval);
+      };
     }
   }, [isOpen, userId, backendUrl]);
 
   useEffect(() => {
     if (messages.length > 0) {
       scrollToBottom(true);
+      
+      // Update read status if open
+      if (isOpen) {
+         const lastMsg = messages[messages.length - 1];
+         if (lastMsg.senderId === 'admin') {
+             localStorage.setItem('lastSeenAdminMsgId', lastMsg._id);
+         }
+      }
     }
-  }, [messages]);
+  }, [messages, isOpen]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -361,9 +403,32 @@ const ChatWidget = () => {
           </form>
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative group">
+          {hasUnread && lastUnreadMessage && !isOpen && (
+            <div className="absolute bottom-full right-0 mb-4 mr-2 bg-white text-gray-800 text-sm p-3.5 rounded-2xl rounded-br-none shadow-2xl border border-gray-100 max-w-[220px] sm:max-w-[280px] animate-fadeIn whitespace-normal break-words z-50">
+               <div className="flex items-center gap-2 mb-1.5 border-b border-gray-100 pb-1.5">
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs">💬</div>
+                  <span className="font-bold text-[11px] text-gray-900 uppercase tracking-wide">Zafran Admin</span>
+               </div>
+               <p className="line-clamp-3 text-gray-600 leading-relaxed font-medium">"{lastUnreadMessage}"</p>
+               <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
+                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+                 Tap chat to reply
+               </p>
+            </div>
+          )}
           <button 
-            onClick={() => { setIsOpen(true); setHasUnread(false); }}
+            onClick={() => { 
+              setIsOpen(true); 
+              setHasUnread(false); 
+              setLastUnreadMessage(null);
+              if (messages.length > 0) {
+                 const lastMsg = messages[messages.length - 1];
+                 if (lastMsg.senderId === 'admin') {
+                     localStorage.setItem('lastSeenAdminMsgId', lastMsg._id);
+                 }
+              }
+            }}
             className="bg-black text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition active:scale-95"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">

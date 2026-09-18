@@ -64,7 +64,7 @@ const About = () => {
         </div>
         <div className='border px-8 md:px-12 py-10 flex flex-col gap-3 flex-1'>
           <b className="text-gray-900">Dedicated Support:</b>
-          <p className='text-gray-600'>Direct support via phone (01880172859 / 01742111888) and WhatsApp for all your inquiries.</p>
+          <p className='text-gray-600'>Direct support via phone (01880172859) and WhatsApp (01742111888) for all your inquiries.</p>
         </div>
       </div>
     </div>

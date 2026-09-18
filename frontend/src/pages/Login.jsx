@@ -14,13 +14,22 @@ const Login = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
     setLoading(true);
     try {
-      if (currentState === 'Sign Up') {
+      if (currentState === 'Forgot Password') {
+        const response = await axios.post(`${backendUrl || ''}/api/user/reset-password`, { email, newPassword });
+        if (response.data.success) {
+          toast.success(response.data.message);
+          setCurrentState('Login');
+        } else {
+          toast.error(response.data.message);
+        }
+      } else if (currentState === 'Sign Up') {
         const response = await axios.post(`${backendUrl || ''}/api/user/register`, { name, email, password });
         if (response.data.success) {
           const newToken = response.data.token;
@@ -81,7 +90,8 @@ const Login = () => {
         )}
 
         {/* Tab switchers */}
-        <div className="flex bg-gray-100 p-1 rounded-2xl">
+        {currentState !== 'Forgot Password' && (
+<div className="flex bg-gray-100 p-1 rounded-2xl">
           <button
             type="button"
             onClick={() => setCurrentState('Login')}
@@ -105,13 +115,14 @@ const Login = () => {
             Create Account (রেজিস্ট্রেশন)
           </button>
         </div>
+        )}
 
         <div className='text-center mt-1 mb-1'>
           <p className='prata-regular text-2xl sm:text-3xl text-gray-900'>
-            {currentState === 'Login' ? 'Welcome Back' : 'Join Zafran'}
+            {currentState === 'Login' ? 'Welcome Back' : currentState === 'Forgot Password' ? 'Reset Password' : 'Join Zafran'}
           </p>
           <p className='text-xs text-gray-400 mt-1'>
-            {currentState === 'Login' ? 'Please enter your email and password' : 'Enter your details to create a free account'}
+            {currentState === 'Login' ? 'Please enter your email and password' : currentState === 'Forgot Password' ? 'Enter your email and a new password' : 'Enter your details to create a free account'}
           </p>
         </div>
 
@@ -140,21 +151,40 @@ const Login = () => {
             required
           />
         </div>
-
-        <div>
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-1.5">Password</label>
-          <input 
-            onChange={(e)=>setPassword(e.target.value)} 
-            value={password} 
-            type="password" 
-            className='w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-black focus:bg-white focus:ring-2 focus:ring-black/5 transition' 
-            placeholder='••••••••' 
-            required
-          />
-        </div>
+        
+        {currentState === 'Forgot Password' ? (
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-1.5">New Password</label>
+            <input 
+              onChange={(e)=>setNewPassword(e.target.value)} 
+              value={newPassword} 
+              type="password" 
+              className='w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-black focus:bg-white focus:ring-2 focus:ring-black/5 transition' 
+              placeholder='••••••••' 
+              required
+            />
+          </div>
+        ) : (
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-1.5">Password</label>
+            <input 
+              onChange={(e)=>setPassword(e.target.value)} 
+              value={password} 
+              type="password" 
+              className='w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-black focus:bg-white focus:ring-2 focus:ring-black/5 transition' 
+              placeholder='••••••••' 
+              required
+            />
+          </div>
+        )}
 
         <div className='w-full flex justify-between items-center text-xs text-gray-500 mt-0.5'>
-          <p className='cursor-pointer hover:text-black transition'>Forgot password?</p>
+          {currentState === 'Forgot Password' ? (
+             <p onClick={()=> setCurrentState('Login')} className='cursor-pointer hover:text-black transition'>Back to Login</p>
+          ) : (
+             <p onClick={()=> setCurrentState('Forgot Password')} className='cursor-pointer hover:text-black transition'>Forgot password?</p>
+          )}
+          
           {currentState === 'Login' ? (
             <p onClick={()=> setCurrentState('Sign Up')} className='cursor-pointer font-semibold text-black hover:underline'>
               New here? Create account
@@ -171,7 +201,7 @@ const Login = () => {
           disabled={loading}
           className='w-full bg-black text-white py-3.5 mt-2 rounded-xl font-bold text-sm tracking-wider uppercase hover:bg-neutral-800 transition shadow-sm active:scale-98 cursor-pointer disabled:opacity-50'
         >
-          {loading ? 'Please wait...' : (currentState === 'Login' ? 'Sign In & Continue' : 'Create Account & Continue')}
+          {loading ? 'Please wait...' : (currentState === 'Login' ? 'Sign In & Continue' : currentState === 'Forgot Password' ? 'Reset Password' : 'Create Account & Continue')}
         </button>
       </form>
     </div>

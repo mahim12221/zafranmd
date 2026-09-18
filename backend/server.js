@@ -28,12 +28,20 @@ const io = new Server(httpServer, {
 // Socket.io connection logic
 const userSocketMap = new Map(); // userId -> socketId
 
+const broadcastOnlineUsers = () => {
+  const adminSocketId = userSocketMap.get('admin');
+  if (adminSocketId) {
+    io.to(adminSocketId).emit('onlineUsers', Array.from(userSocketMap.keys()));
+  }
+};
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   socket.on('register', (userId) => {
     userSocketMap.set(userId, socket.id);
     console.log(`User registered: ${userId} with socketId: ${socket.id}`);
+    broadcastOnlineUsers();
   });
 
   socket.on('sendMessage', (messageData) => {
@@ -49,6 +57,7 @@ io.on('connection', (socket) => {
     for (let [userId, socketId] of userSocketMap.entries()) {
       if (socketId === socket.id) {
         userSocketMap.delete(userId);
+        broadcastOnlineUsers();
         break;
       }
     }
