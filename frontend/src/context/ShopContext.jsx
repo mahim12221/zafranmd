@@ -42,6 +42,12 @@ const ShopContextProvider = (props) => {
             const res = await axios.get(`${backendUrl || ''}/api/user/profile`, { headers: { token: activeToken } });
             if (res.data.success && res.data.user) {
                 setUserData(res.data.user);
+            } else if (!res.data.success && (res.data.message?.toLowerCase().includes('login again') || res.data.message?.toLowerCase().includes('removed'))) {
+                setToken('');
+                localStorage.removeItem('token');
+                setUserData(null);
+                toast.error("Session expired or account removed. Please login again.");
+                navigate('/login');
             }
         } catch (err) {
             console.log('Error fetching user profile:', err.message);

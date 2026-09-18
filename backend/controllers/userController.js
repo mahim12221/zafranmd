@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.js";
+import orderModel from "../models/orderModel.js";
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -145,6 +146,7 @@ const registerUser = async (req, res) => {
     }
 }
 
+import adminProfileModel from "../models/adminProfileModel.js";
 import fs from 'fs';
 import path from 'path';
 
@@ -170,7 +172,7 @@ const loadAdminProfileFromFile = () => {
     };
 };
 
-let adminProfileData = loadAdminProfileFromFile();
+let fallbackAdminProfileData = loadAdminProfileFromFile();
 
 const saveAdminProfileToFile = (data) => {
     try {
@@ -178,6 +180,23 @@ const saveAdminProfileToFile = (data) => {
     } catch (e) {
         console.log('Error saving adminProfile.json:', e.message);
     }
+};
+
+const getAdminProfileData = async () => {
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@zafran.com';
+    if (mongoose.connection.readyState === 1) {
+        let profile = await adminProfileModel.findOne({ email: adminEmail });
+        if (!profile) {
+            profile = await adminProfileModel.create({
+                email: adminEmail,
+                ...fallbackAdminProfileData,
+                _id: undefined // Let mongo create it
+            });
+        }
+        return profile;
+    }
+    fallbackAdminProfileData.email = adminEmail;
+    return fallbackAdminProfileData;
 };
 
 // Route for admin login
@@ -189,12 +208,20 @@ const adminLogin = async (req, res) => {
 
         if (email === adminEmail && password === adminPassword) {
             const token = jwt.sign(email + password, JWT_SECRET);
-            adminProfileData.lastLogin = new Date();
-            adminProfileData.email = adminEmail;
+            
+            const profile = await getAdminProfileData();
+            if (mongoose.connection.readyState === 1) {
+                profile.lastLogin = new Date();
+                await profile.save();
+            } else {
+                fallbackAdminProfileData.lastLogin = new Date();
+                saveAdminProfileToFile(fallbackAdminProfileData);
+            }
+
             res.json({ 
                 success: true, 
                 token,
-                admin: adminProfileData
+                admin: profile
             });
         }
         else {
@@ -210,8 +237,8 @@ const adminLogin = async (req, res) => {
 // Route for getting dedicated admin profile
 const getAdminProfile = async (req, res) => {
     try {
-        adminProfileData.email = process.env.ADMIN_EMAIL || adminProfileData.email;
-        res.json({ success: true, admin: adminProfileData });
+        const profile = await getAdminProfileData();
+        res.json({ success: true, admin: profile });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message });
@@ -240,17 +267,26 @@ const updateAdminProfile = async (req, res) => {
             }
         }
 
-        if (name) adminProfileData.name = name;
-        if (phone !== undefined) adminProfileData.phone = phone;
-        if (title !== undefined) adminProfileData.title = title;
-        if (profilePic) adminProfileData.profilePic = profilePic;
-
-        saveAdminProfileToFile(adminProfileData);
+        const profile = await getAdminProfileData();
+        
+        if (mongoose.connection.readyState === 1) {
+            if (name) profile.name = name;
+            if (phone !== undefined) profile.phone = phone;
+            if (title !== undefined) profile.title = title;
+            if (profilePic) profile.profilePic = profilePic;
+            await profile.save();
+        } else {
+            if (name) fallbackAdminProfileData.name = name;
+            if (phone !== undefined) fallbackAdminProfileData.phone = phone;
+            if (title !== undefined) fallbackAdminProfileData.title = title;
+            if (profilePic) fallbackAdminProfileData.profilePic = profilePic;
+            saveAdminProfileToFile(fallbackAdminProfileData);
+        }
 
         res.json({ 
             success: true, 
             message: "Admin profile updated successfully", 
-            admin: adminProfileData 
+            admin: profile 
         });
     } catch (error) {
         console.error(error);
@@ -267,21 +303,55 @@ const getUserProfile = async (req, res) => {
         }
 
         if (mongoose.connection.readyState === 1) {
-            const user = await userModel.findById(userId).select('-password');
-            if (user) {
-                return res.json({ success: true, user });
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                const user = await userModel.findById(userId).select('-password');
+                if (user) {
+                    return res.json({ success: true, user });
+                }
+            }
+            const userById = await userModel.findOne({ _id: userId }).select('-password');
+            if (userById) {
+                return res.json({ success: true, user: userById });
+            }
+            const userByEmail = await userModel.findOne({ email: String(userId).toLowerCase() }).select('-password');
+            if (userByEmail) {
+                return res.json({ success: true, user: userByEmail });
             }
         }
         
         // Search in mockUsers
         for (const user of mockUsers.values()) {
-            if (user._id === userId) {
+            if (String(user._id) === String(userId) || (user.email && user.email.toLowerCase() === String(userId).toLowerCase())) {
                 const { password, ...safeUser } = user;
                 return res.json({ success: true, user: safeUser });
             }
         }
 
-        // Return a generic fallback user if token is valid
+        // Check if user has orders with customer address details
+        if (mongoose.connection.readyState === 1) {
+            try {
+                const lastOrder = await orderModel.findOne({ userId }).sort({ date: -1 });
+                if (lastOrder && lastOrder.address) {
+                    const custName = `${lastOrder.address.firstName || ''} ${lastOrder.address.lastName || ''}`.trim() || 'Valued Customer';
+                    return res.json({
+                        success: true,
+                        user: {
+                            _id: userId,
+                            name: custName,
+                            email: lastOrder.address.email || 'customer@zafran.com',
+                            phone: lastOrder.address.phone || '',
+                            address: `${lastOrder.address.street || lastOrder.address.detailedAddress || ''}, ${lastOrder.address.district || lastOrder.address.city || ''}`,
+                            profilePic: '',
+                            role: 'Customer'
+                        }
+                    });
+                }
+            } catch (oErr) {
+                console.log('Order lookup fallback error:', oErr.message);
+            }
+        }
+
+        // Return fallback user if token is valid
         res.json({
             success: true,
             user: {

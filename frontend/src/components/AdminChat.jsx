@@ -42,10 +42,34 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
     setContextMenu({ visible: true, x: e.clientX, y: e.clientY, msg });
   };
 
-  const fetchCustomerInfo = async (custId) => {
-    if (!custId || customersMap[custId]?.fetched) return;
+  const fetchAllUsersMap = async () => {
+    if (!token) return;
     try {
-      const userRes = await axios.post(`${backendUrl}/api/user/profile`, { userId: custId }, { headers: { token } });
+      const res = await axios.post(`${backendUrl}/api/user/admin/all-users`, {}, { headers: { token } });
+      if (res.data.success && Array.isArray(res.data.users)) {
+        const map = {};
+        res.data.users.forEach(u => {
+          if (u._id) {
+            map[u._id] = { ...u, fetched: true };
+          }
+        });
+        setCustomersMap(prev => ({ ...prev, ...map }));
+      }
+    } catch (err) {
+      console.log('Error fetching all users for admin chat map:', err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchAllUsersMap();
+    }
+  }, [token, backendUrl]);
+
+  const fetchCustomerInfo = async (custId) => {
+    if (!custId || (customersMap[custId]?.fetched && customersMap[custId]?.name && !customersMap[custId]?.name.startsWith('Customer '))) return;
+    try {
+      const userRes = await axios.post(`${backendUrl}/api/user/admin/user-profile`, { userId: custId }, { headers: { token } });
       if (userRes.data.success && userRes.data.user) {
         setCustomersMap(prev => ({
           ...prev,
@@ -54,44 +78,52 @@ const AdminChat = ({ adminToken: token, ordersList = [] }) => {
             fetched: true
           }
         }));
+        return;
       }
     } catch (err) {
-      const order = ordersList?.find(o => o.userId === custId);
-      if (order && order.address) {
-        setCustomersMap(prev => ({
-          ...prev,
-          [custId]: {
-            _id: custId,
-            name: `${order.address.firstName} ${order.address.lastName}`,
-            email: order.address.email || 'customer@zafran.com',
-            phone: order.address.phone || '',
-            address: `${order.address.street || ''}, ${order.address.city || ''}`,
-            profilePic: '',
-            fetched: true
-          }
-        }));
-      }
+      console.log('Error fetching customer via admin API:', err.message);
+    }
+
+    const order = ordersList?.find(o => o.userId === custId);
+    if (order && order.address) {
+      setCustomersMap(prev => ({
+        ...prev,
+        [custId]: {
+          _id: custId,
+          name: `${order.address.firstName || ''} ${order.address.lastName || ''}`.trim() || 'Valued Customer',
+          email: order.address.email || 'customer@zafran.com',
+          phone: order.address.phone || '',
+          address: `${order.address.street || ''}, ${order.address.city || ''}`,
+          profilePic: '',
+          fetched: true
+        }
+      }));
     }
   };
 
   const getCustomerObj = (custId) => {
-    if (customersMap[custId]) return customersMap[custId];
+    if (customersMap[custId] && customersMap[custId].name && !customersMap[custId].name.startsWith('Customer ')) {
+      return customersMap[custId];
+    }
     if (ordersList && ordersList.length > 0) {
       const order = ordersList.find(o => o.userId === custId);
       if (order && order.address) {
         return {
           _id: custId,
-          name: `${order.address.firstName} ${order.address.lastName}`,
-          email: order.address.email || '',
+          name: `${order.address.firstName || ''} ${order.address.lastName || ''}`.trim() || 'Valued Customer',
+          email: order.address.email || 'customer@zafran.com',
           phone: order.address.phone || '',
           address: `${order.address.street || ''}, ${order.address.city || ''}`,
           profilePic: ''
         };
       }
     }
-    return {
+    if (custId && !customersMap[custId]?.fetched) {
+      fetchCustomerInfo(custId);
+    }
+    return customersMap[custId] || {
       _id: custId,
-      name: 'Customer ' + (custId ? custId.substring(0, 6) : ''),
+      name: 'Valued Customer',
       email: '',
       phone: '',
       address: '',
