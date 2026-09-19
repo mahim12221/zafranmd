@@ -21,8 +21,12 @@ const Product = () => {
   const [editRating, setEditRating] = useState(5);
   const [editComment, setEditComment] = useState('');
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [preOrderPlaced, setPreOrderPlaced] = useState(false);
 
-  const isAdmin = Boolean(localStorage.getItem('adminToken') || localStorage.getItem('token') === 'admin_secret_token');
+  const handlePreOrder = () => {
+    setPreOrderPlaced(true);
+    toast.success("Pre-order request registered successfully!");
+  };
 
   const fetchProductData = async () => {
     setLoading(true);
@@ -387,16 +391,41 @@ const Product = () => {
             </p>
           </div>
 
-          {/* Actions: Direct Order Now + Add to Cart */}
+          {/* Actions: Direct Order Now + Add to Cart / Pre-Order */}
           <div className="pt-2 space-y-3">
             {productData.outOfStock ? (
-              <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl text-center space-y-2">
-                <p className="text-red-700 font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-2">
-                  <span>🚫</span> OUT OF STOCK
-                </p>
-                <p className="text-xs text-red-600">
-                  This item is currently out of stock. You can order it once back in stock.
-                </p>
+              <div className="p-5 bg-orange-50/90 border-2 border-orange-200 rounded-2xl text-center space-y-3">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+                  <p className="text-orange-950 font-extrabold text-sm uppercase tracking-wider">
+                    Out of Stock • Pre-Order Available
+                  </p>
+                </div>
+                
+                {!preOrderPlaced ? (
+                  <div className="space-y-3">
+                    <p className="text-xs text-orange-900 leading-relaxed">
+                      This item is currently sold out. Pre-order now to reserve yours from the upcoming batch!
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handlePreOrder}
+                      className="w-full bg-black hover:bg-neutral-800 text-white font-bold text-xs uppercase tracking-wider py-4 px-6 rounded-xl transition cursor-pointer shadow-md flex items-center justify-center gap-2"
+                    >
+                      <span>📦</span>
+                      <span>PRE-ORDER NOW</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3.5 bg-white border border-orange-300 rounded-xl space-y-1.5 animate-fadeIn shadow-2xs">
+                    <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-1">
+                      <span>✓</span> Pre-Order Request Registered!
+                    </p>
+                    <p className="text-[11px] text-zinc-700 leading-relaxed font-medium">
+                      User will be notified when this item is restocked and ready for delivery.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <>

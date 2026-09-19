@@ -1,6 +1,6 @@
 import React from 'react';
 import Title from '../components/Title';
-import { assets } from '../assets/assets';
+import aboutTechImg from '../assets/tech_hero.jpg';
 
 const About = () => {
   return (
@@ -13,7 +13,13 @@ const About = () => {
       </div>
 
       <div className="my-10 flex flex-col md:flex-row gap-12 lg:gap-16 items-center">
-        <img className="w-full md:max-w-[450px] rounded-2xl shadow-lg border border-zinc-200/80" src={assets.about_img} alt="Kaviro Tech Story" />
+        <img
+          id="about-tech-story-image"
+          className="w-full md:max-w-[450px] rounded-2xl shadow-lg border border-zinc-200/80 object-cover"
+          src={aboutTechImg}
+          alt="Kaviro Tech Story"
+          referrerPolicy="no-referrer"
+        />
         <div className="flex flex-col justify-center gap-5 md:w-2/4 text-zinc-600 text-sm leading-relaxed">
           <p>
             <strong>Kaviro</strong> was established with a singular vision: to bring distinctive, high-performance smart gadgets, tactile fidget toys, and innovative everyday tech accessories to everyone without the excessive markup of traditional tech retailers.

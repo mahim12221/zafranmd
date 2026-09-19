@@ -24,7 +24,7 @@ const BestSeller = () => {
           Our top-rated products chosen by customers for exceptional performance and quality.
         </p>
       </div>
-      <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 sm:gap-4 md:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5 gap-y-6">
         {bestSeller.map((item, index) => (
           <ProductItem key={index} id={item._id} image={item.images || item.image} name={item.name} price={item.price} discount={item.discount} outOfStock={item.outOfStock} salesCount={item.salesCount} />
         ))}

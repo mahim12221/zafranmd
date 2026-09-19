@@ -40,7 +40,14 @@ const NavBar = () => {
   return (
     <div className="flex items-center justify-between py-5 font-medium">
       {/* Logo */}
-      <Link to='/'><img src={assets.logo} className="w-36" alt="Logo" /></Link>
+      <Link to='/' className="flex items-center">
+        <img 
+          id="kaviro-main-header-logo" 
+          src={assets.logo} 
+          className="w-36 sm:w-44 h-auto object-contain hover:opacity-90 transition select-none" 
+          alt="Kaviro Gadgets & Gear" 
+        />
+      </Link>
 
       {/* Navigation Links */}
       <ul className="hidden sm:flex items-center gap-7 text-xs md:text-sm font-semibold tracking-wider text-zinc-600">

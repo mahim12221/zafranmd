@@ -1,5 +1,5 @@
 import React from 'react';
-import { assets } from '../assets/assets';
+import heroImg from '../assets/gadgets_hero.jpg';
 import { Link } from 'react-router-dom';
 
 const Hero = () => {
@@ -71,11 +71,13 @@ const Hero = () => {
         </div>
 
         {/* Right Image Showcase */}
-        <div className="w-full sm:w-1/2 relative h-48 sm:h-full flex items-center justify-center overflow-hidden">
+        <div id="hero-banner-image-container" className="w-full sm:w-1/2 relative h-48 sm:h-full flex items-center justify-center overflow-hidden">
           <img
+            id="hero-banner-image"
             className="w-full h-full object-cover object-center sm:object-right opacity-90 hover:scale-105 transition-transform duration-700"
-            src={assets.hero_img}
+            src={heroImg}
             alt="Kaviro Gadgets & Tech Collection"
+            referrerPolicy="no-referrer"
           />
           {/* Subtle gradient overlay to blend smoothly */}
           <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-zinc-950 via-zinc-950/40 to-transparent"></div>

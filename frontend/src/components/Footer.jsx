@@ -81,7 +81,7 @@ const Footer = () => {
         <p>© 2026 KAVIRO. All rights reserved. Created &amp; Operated by Mahim Afridi.</p>
         <p className="flex items-center gap-2 font-medium text-zinc-500">
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-          <span>Authentic Fashion Quality</span>
+          <span>100% Authentic Tech &amp; Gadgets</span>
         </p>
       </div>
     </footer>

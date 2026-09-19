@@ -1,6 +1,6 @@
 import React from 'react';
 import Title from '../components/Title';
-import { assets } from '../assets/assets';
+import contactTechImg from '../assets/contact_tech.jpg';
 
 const Contact = () => {
   return (
@@ -8,12 +8,18 @@ const Contact = () => {
       <div className="text-center mb-8">
         <Title text1={'CONTACT'} text2={'KAVIRO'} />
         <p className="text-xs sm:text-sm text-zinc-500 max-w-lg mx-auto mt-1">
-          Have a question about sizing, custom inquiries, or your order? We're always here to assist.
+          Have a question about gadgets, EDC gear, or your order? We're always here to assist.
         </p>
       </div>
 
       <div className="my-10 flex flex-col justify-center md:flex-row gap-12 mb-24 items-center">
-        <img className="w-full md:max-w-[480px] rounded-2xl shadow-lg border border-zinc-200/80" src={assets.contact_img} alt="Kaviro Concierge" />
+        <img
+          id="contact-tech-support-image"
+          className="w-full md:max-w-[480px] rounded-2xl shadow-lg border border-zinc-200/80 object-cover"
+          src={contactTechImg}
+          alt="Kaviro Concierge"
+          referrerPolicy="no-referrer"
+        />
         <div className="flex flex-col justify-center items-start gap-6 max-w-lg p-6 sm:p-8 bg-zinc-50 border border-zinc-200/80 rounded-3xl">
           <div>
             <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-100/70 border border-orange-200 px-2.5 py-1 rounded-full">

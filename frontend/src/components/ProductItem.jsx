@@ -14,19 +14,20 @@ const ProductItem = ({ id, image, name, price, discount, outOfStock, salesCount 
 
   return (
     <Link 
-      className="group flex flex-col cursor-pointer select-none break-inside-avoid mb-4 sm:mb-5 block w-full" 
+      className="group flex flex-col cursor-pointer select-none w-full text-zinc-700" 
       to={id ? `/product/${id}` : '#'}
       onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
     >
-      {/* Product Image Frame */}
+      {/* Product Image Frame - Clean Aspect Square with Full Uncropped Image */}
       <div 
-        className="relative overflow-hidden rounded-2xl bg-zinc-100 border border-zinc-200/80 shadow-2xs group-hover:shadow-md transition-all duration-300 w-full"
+        className="relative overflow-hidden rounded-2xl bg-zinc-50 border border-zinc-200/80 shadow-2xs group-hover:shadow-md group-hover:border-zinc-300 transition-all duration-300 w-full aspect-square flex items-center justify-center p-2 sm:p-3"
       >
         <img 
-          className={`w-full h-auto block object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${outOfStock ? 'opacity-50 grayscale' : ''}`} 
+          className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ease-out ${outOfStock ? 'opacity-50 grayscale' : ''}`} 
           src={productImage} 
           alt={name || "Kaviro Product"} 
           loading="lazy"
+          referrerPolicy="no-referrer"
         />
         
         {/* Floating Badges */}
@@ -63,8 +64,8 @@ const ProductItem = ({ id, image, name, price, discount, outOfStock, salesCount 
         )}
       </div>
 
-      {/* Product Details - Docked tightly directly under image */}
-      <div className="pt-2 px-0.5 flex flex-col">
+      {/* Product Details */}
+      <div className="pt-2.5 px-0.5 flex flex-col">
         <h3 className="text-xs sm:text-sm font-semibold text-zinc-800 group-hover:text-black line-clamp-1 transition-colors">
           {name || "Untitled Item"}
         </h3>
