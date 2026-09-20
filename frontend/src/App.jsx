@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import Collection from './pages/Collection'; 
 import AdminPortal from './pages/AdminPortal';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import BrandAssets from './pages/BrandAssets';
 import NavBar from './components/NavBar';
 import Footer from './components/Footer';
 import SearchBar from './components/SearchBar';
@@ -56,6 +57,7 @@ const App = () => {
           <Route path="/place-order" element={<PlaceOrder />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/brand-assets" element={<BrandAssets />} />
         </Routes>
       </div>
       <Footer />

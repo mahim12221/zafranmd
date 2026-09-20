@@ -1,19 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 52" fill="none">
   <defs>
-    <linearGradient id="kaviroGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#09090b" />
-      <stop offset="100%" stop-color="#18181b" />
+    <linearGradient id="adminBg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
     </linearGradient>
-    <linearGradient id="kaviroAccent" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#f97316" />
+    <linearGradient id="adminOrangeGrad" x1="0" y1="0" x2="25" y2="25" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff7828" />
       <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
   </defs>
-  <!-- Modern Geometric K Emblem Mark -->
-  <rect x="2" y="8" width="36" height="36" rx="9" fill="url(#kaviroGrad)" />
-  <path d="M13 17 L13 35" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-  <path d="M26 17 L15 26 L27 35" stroke="url(#kaviroAccent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-  <!-- Brand Wordmark -->
-  <text x="48" y="35" font-family="'Outfit', system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" letter-spacing="4" fill="#09090b">KAVIRO</text>
-  <circle cx="216" cy="31" r="3.5" fill="#f97316" />
+
+  <!-- Left Icon Mark (40x40) -->
+  <g transform="translate(4, 6)">
+    <rect x="0" y="0" width="40" height="40" rx="11" fill="url(#adminBg)" stroke="#27272a" stroke-width="1.2" />
+    
+    <g transform="translate(11, 8)">
+      <rect x="0" y="0" width="4" height="24" rx="2" fill="#ffffff" />
+      <path d="M7.5 12 L17 2.8 C18 1.8 19.5 2.5 19.5 3.8 L19.5 6 C19.5 6.8 19 7.6 18.5 8.1 L11 15 Z" fill="url(#adminOrangeGrad)" />
+      <path d="M7.5 12 L18.5 21.9 C19 22.4 19.5 23.2 19.5 24 L19.5 26.2 C19.5 27.5 18 28.2 17 27.2 L7.5 18 Z" fill="#ffffff" />
+      <circle cx="9.5" cy="15" r="1.6" fill="url(#adminOrangeGrad)" stroke="#09090b" stroke-width="0.8" />
+    </g>
+  </g>
+
+  <!-- Typography -->
+  <g transform="translate(56, 10)">
+    <text x="0" y="24" font-family="'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif" font-size="24" font-weight="900" letter-spacing="3.2" fill="#09090b">KERIYO</text>
+    <circle cx="118" cy="20" r="3" fill="#ff7828" />
+    <text x="1" y="36" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="7.5" font-weight="800" letter-spacing="2.5" fill="#71717a">ADMINISTRATION</text>
+  </g>
 </svg>

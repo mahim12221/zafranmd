@@ -6,7 +6,7 @@ const About = () => {
   return (
     <div className="py-8">
       <div className="text-center mb-8">
-        <Title text1={'ABOUT'} text2={'KAVIRO'} />
+        <Title text1={'ABOUT'} text2={'KERIYO'} />
         <p className="text-xs sm:text-sm text-zinc-500 max-w-lg mx-auto mt-1">
           The story behind innovative smart gadgets, EDC fidget gear, and everyday tech innovations.
         </p>
@@ -17,15 +17,15 @@ const About = () => {
           id="about-tech-story-image"
           className="w-full md:max-w-[450px] rounded-2xl shadow-lg border border-zinc-200/80 object-cover"
           src={aboutTechImg}
-          alt="Kaviro Tech Story"
+          alt="Keriyo Tech Story"
           referrerPolicy="no-referrer"
         />
         <div className="flex flex-col justify-center gap-5 md:w-2/4 text-zinc-600 text-sm leading-relaxed">
           <p>
-            <strong>Kaviro</strong> was established with a singular vision: to bring distinctive, high-performance smart gadgets, tactile fidget toys, and innovative everyday tech accessories to everyone without the excessive markup of traditional tech retailers.
+            <strong>Keriyo</strong> was established with a singular vision: to bring distinctive, high-performance smart gadgets, tactile fidget toys, and innovative everyday tech accessories to everyone without the excessive markup of traditional tech retailers.
           </p>
           <p>
-            Founded by <strong>Mahim Afridi</strong>, Kaviro represents innovation, curiosity, and an uncompromising commitment to premium build quality, satisfying EDC mechanics, and reliable electronics.
+            Founded by <strong>Mahim Afridi</strong>, Keriyo represents innovation, curiosity, and an uncompromising commitment to premium build quality, satisfying EDC mechanics, and reliable electronics.
           </p>
           <div className="p-5 bg-zinc-50 border-l-4 border-orange-500 rounded-r-2xl">
             <p className="text-zinc-900 font-medium italic text-sm">
@@ -36,7 +36,7 @@ const About = () => {
             </p>
           </div>
           <p>
-            Every product in the Kaviro collection is rigorously tested for durability, tactile responsiveness, and build perfection so you receive only the finest gear.
+            Every product in the Keriyo collection is rigorously tested for durability, tactile responsiveness, and build perfection so you receive only the finest gear.
           </p>
           <div className="flex items-center gap-3 pt-2 text-xs">
             <a
@@ -52,7 +52,7 @@ const About = () => {
       </div>
 
       <div className="text-center pt-10 pb-4">
-        <Title text1={'WHY CHOOSE'} text2={'KAVIRO'} />
+        <Title text1={'WHY CHOOSE'} text2={'KERIYO'} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">

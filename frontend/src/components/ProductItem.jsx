@@ -25,7 +25,7 @@ const ProductItem = ({ id, image, name, price, discount, outOfStock, salesCount 
         <img 
           className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ease-out ${outOfStock ? 'opacity-50 grayscale' : ''}`} 
           src={productImage} 
-          alt={name || "Kaviro Product"} 
+          alt={name || "Keriyo Product"} 
           loading="lazy"
           referrerPolicy="no-referrer"
         />

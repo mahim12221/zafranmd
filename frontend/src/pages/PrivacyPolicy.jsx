@@ -7,22 +7,22 @@ const PrivacyPolicy = () => {
       <div className="text-center mb-8">
         <Title text1="PRIVACY" text2="POLICY" />
         <p className="text-xs sm:text-sm text-zinc-500 max-w-lg mx-auto mt-1">
-          How we handle and protect your personal information at Kaviro.
+          How we handle and protect your personal information at Keriyo.
         </p>
       </div>
 
       <div className="max-w-3xl mx-auto text-xs sm:text-sm text-zinc-600 space-y-6 leading-relaxed">
         <div className="p-5 bg-zinc-50 border border-zinc-200/80 rounded-2xl">
           <p className="text-zinc-900 font-medium">
-            Kaviro (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is founded and operated by <strong>Mahim Afridi</strong>. We are committed to safeguarding your privacy and ensuring your personal information is strictly protected.
+            Keriyo (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) is founded and operated by <strong>Mahim Afridi</strong>. We are committed to safeguarding your privacy and ensuring your personal information is strictly protected.
           </p>
-          <p className="text-xs text-zinc-400 mt-1">Effective Date: 2025–2026 | Last Updated for Kaviro</p>
+          <p className="text-xs text-zinc-400 mt-1">Effective Date: 2025–2026 | Last Updated for Keriyo</p>
         </div>
 
         <div>
           <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 mb-2">1. Information We Collect</h3>
           <p>
-            When you place an order or create an account on Kaviro, we collect necessary contact and delivery details including your full name, email address, physical delivery address, and telephone number (solely for parcel delivery dispatch and confirmation).
+            When you place an order or create an account on Keriyo, we collect necessary contact and delivery details including your full name, email address, physical delivery address, and telephone number (solely for parcel delivery dispatch and confirmation).
           </p>
         </div>
 
@@ -47,7 +47,7 @@ const PrivacyPolicy = () => {
           <h3 className="text-sm sm:text-base font-extrabold text-zinc-900 mb-2">4. Questions &amp; Support</h3>
           <p>
             If you have questions regarding this Privacy Policy or wish to update your details, please contact founder Mahim Afridi directly at{' '}
-            <a href="mailto:contact@kaviro.com" className="text-zinc-950 font-bold underline">contact@kaviro.com</a> or call{' '}
+            <a href="mailto:contact@keriyo.com" className="text-zinc-950 font-bold underline">contact@keriyo.com</a> or call{' '}
             <a href="tel:01880172859" className="text-zinc-950 font-bold underline">01880172859</a>.
           </p>
         </div>

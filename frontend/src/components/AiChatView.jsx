@@ -186,14 +186,14 @@ const AiChatView = ({ userId, backendUrl, onBack, onClose }) => {
 
           <div className="relative flex-shrink-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 border border-orange-500/50 flex items-center justify-center p-1.5 shadow-xs">
-              <img src="/kaviro-emblem.svg" alt="Kaviro AI" className="w-full h-full object-contain select-none" />
+              <img src="/keriyo-emblem.svg" alt="Keriyo AI" className="w-full h-full object-contain select-none" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-zinc-950 rounded-full"></span>
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <h3 className="font-bold text-xs sm:text-sm text-white truncate leading-tight">Kaviro AI</h3>
+              <h3 className="font-bold text-xs sm:text-sm text-white truncate leading-tight">Keriyo AI</h3>
               <span className="bg-orange-500/20 text-orange-400 border border-orange-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider flex-shrink-0">
                 AI
               </span>
@@ -240,11 +240,11 @@ const AiChatView = ({ userId, backendUrl, onBack, onClose }) => {
                   ✨
                 </div>
                 <h4 className="font-bold text-xs sm:text-sm text-zinc-900">
-                  Welcome to Kaviro AI!
+                  Welcome to Keriyo AI!
                 </h4>
               </div>
               <p className="text-xs text-zinc-600 leading-relaxed">
-                Hi! I'm Kaviro AI, your intelligent gadgets and EDC fidget gear concierge. Ask me anything about our products, specs, recommendations, delivery, or warranty.
+                Hi! I'm Keriyo AI, your intelligent gadgets and EDC fidget gear concierge. Ask me anything about our products, specs, recommendations, delivery, or warranty.
               </p>
             </div>
 
@@ -281,7 +281,7 @@ const AiChatView = ({ userId, backendUrl, onBack, onClose }) => {
               <div className="flex items-start gap-1.5 max-w-[86%]">
                 {!isUser && (
                   <div className="w-6 h-6 rounded-full bg-zinc-900 border border-orange-500/40 flex items-center justify-center p-1 flex-shrink-0 mt-1 shadow-xs">
-                    <img src="/kaviro-emblem.svg" alt="Kaviro" className="w-full h-full object-contain select-none" />
+                    <img src="/keriyo-emblem.svg" alt="Keriyo" className="w-full h-full object-contain select-none" />
                   </div>
                 )}
                 <div 
@@ -308,13 +308,13 @@ const AiChatView = ({ userId, backendUrl, onBack, onClose }) => {
         {loading && (
           <div className="flex items-start gap-1.5 max-w-[86%]">
             <div className="w-6 h-6 rounded-full bg-zinc-900 border border-orange-500/40 flex items-center justify-center p-1 flex-shrink-0 mt-1 shadow-xs">
-              <img src="/kaviro-emblem.svg" alt="Kaviro" className="w-full h-full object-contain select-none" />
+              <img src="/keriyo-emblem.svg" alt="Keriyo" className="w-full h-full object-contain select-none" />
             </div>
             <div className="bg-white border border-zinc-200/90 p-3 rounded-2xl rounded-bl-xs shadow-xs flex items-center gap-1.5 text-zinc-400 text-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce"></span>
               <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce [animation-delay:0.2s]"></span>
               <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce [animation-delay:0.4s]"></span>
-              <span className="text-[11px] font-medium text-zinc-500 ml-1">Kaviro AI is thinking...</span>
+              <span className="text-[11px] font-medium text-zinc-500 ml-1">Keriyo AI is thinking...</span>
             </div>
           </div>
         )}

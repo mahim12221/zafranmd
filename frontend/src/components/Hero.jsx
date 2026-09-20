@@ -16,7 +16,7 @@ const Hero = () => {
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 backdrop-blur-md mb-3 shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
             <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-zinc-300">
-              KAVIRO • GADGETS &amp; EDC GEAR
+              KERIYO • GADGETS &amp; EDC GEAR
             </span>
           </div>
 
@@ -76,7 +76,7 @@ const Hero = () => {
             id="hero-banner-image"
             className="w-full h-full object-cover object-center sm:object-right opacity-90 hover:scale-105 transition-transform duration-700"
             src={heroImg}
-            alt="Kaviro Gadgets & Tech Collection"
+            alt="Keriyo Gadgets & Tech Collection"
             referrerPolicy="no-referrer"
           />
           {/* Subtle gradient overlay to blend smoothly */}

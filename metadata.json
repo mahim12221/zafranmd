@@ -1,6 +1,6 @@
 {
-  "name": "Kaviro",
-  "description": "Kaviro – Premier smart gadgets, fidget toys, EDC gear & everyday tech innovations",
+  "name": "Keriyo",
+  "description": "Keriyo – Premier smart gadgets, fidget toys, EDC gear & everyday tech innovations",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

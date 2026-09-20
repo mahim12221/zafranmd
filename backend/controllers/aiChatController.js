@@ -50,14 +50,14 @@ const getAiClient = () => {
   return aiClient;
 };
 
-// System instruction for Kaviro AI Assistant
+// System instruction for Keriyo AI Assistant
 const buildSystemInstruction = async () => {
   let productContext = '';
   try {
     if (mongoose.connection.readyState === 1) {
       const products = await productModel.find({}).select('name price category subCategory description bestseller').limit(25);
       if (products && products.length > 0) {
-        productContext = `\nCurrent Featured Products in Kaviro Store:\n` + 
+        productContext = `\nCurrent Featured Products in Keriyo Store:\n` + 
           products.map(p => `- ${p.name} (৳${p.price}) [Category: ${p.category} > ${p.subCategory}]`).join('\n');
       }
     }
@@ -65,10 +65,10 @@ const buildSystemInstruction = async () => {
     // Ignore db read error
   }
 
-  return `You are "Kaviro AI" (ক্যাভিরো এআই), the official intelligent shopping concierge and gadget specialist for Kaviro (kaviro.onrender.com). Your identity is Kaviro AI. Never refer to yourself as Gemini or any external model.
+  return `You are "Keriyo AI" (কেরিয়ো এআই), the official intelligent shopping concierge and gadget specialist for Keriyo. Your identity is Keriyo AI. Never refer to yourself as Gemini or any external model.
 
-About Kaviro:
-- Kaviro is Bangladesh's top premium store for smart gadgets, mechanical EDC fidget toys, satisfying titanium clickers, haptic sliders, noise-cancelling earbuds, smartwatches, magnetic wireless chargers, and tech accessories.
+About Keriyo:
+- Keriyo is Bangladesh's top premium store for smart gadgets, mechanical EDC fidget toys, satisfying titanium clickers, haptic sliders, noise-cancelling earbuds, smartwatches, magnetic wireless chargers, and tech accessories.
 - Delivery: All over Bangladesh. Inside Dhaka: 2-3 days, Outside Dhaka: 3-5 days.
 - Payment Methods: Cash on Delivery (COD), bKash, Nagad, and Credit/Debit Cards.
 - Warranty & Return: Official replacement warranty and a 7-day return policy for manufacturing defects.
@@ -166,7 +166,7 @@ export const sendAiMessage = async (req, res) => {
     let replyText = "";
     if (!ai) {
       // Graceful fallback if GEMINI_API_KEY is not set yet in development
-      replyText = "স্বাগতম! আমি Kaviro AI Assistant। আমাদের লেটেস্ট স্মার্ট গ্যাজেট, ইডিসি ফিজেট টয় এবং টেক অ্যাক্সেসরিজ নিয়ে আমি আপনাকে কীভাবে সাহায্য করতে পারি? (Note: To enable live AI intelligence, please set GEMINI_API_KEY in your environment settings).";
+      replyText = "স্বাগতম! আমি Keriyo AI Assistant। আমাদের লেটেস্ট স্মার্ট গ্যাজেট, ইডিসি ফিজেট টয় এবং টেক অ্যাক্সেসরিজ নিয়ে আমি আপনাকে কীভাবে সাহায্য করতে পারি? (Note: To enable live AI intelligence, please set GEMINI_API_KEY in your environment settings).";
     } else {
       let lastError = null;
       // Try candidate models in order until one succeeds

@@ -9,10 +9,10 @@ const Footer = () => {
         {/* Brand Column */}
         <div className="md:col-span-5 space-y-4">
           <Link to="/" className="inline-block">
-            <img src={assets.logo} className="w-36 object-contain" alt="Kaviro" />
+            <img src={assets.logo} className="w-36 object-contain" alt="Keriyo" />
           </Link>
           <p className="text-xs sm:text-sm text-zinc-500 max-w-sm leading-relaxed">
-            Kaviro is a modern tech, gadget and lifestyle brand founded by <strong>Mahim Afridi</strong>. We curate innovative smart devices, fidget toys, EDC tools, and premium everyday gear.
+            Keriyo is a modern tech, gadget and lifestyle brand founded by <strong>Mahim Afridi</strong>. We curate innovative smart devices, fidget toys, EDC tools, and premium everyday gear.
           </p>
 
           <div className="flex items-center gap-3 pt-2">
@@ -70,7 +70,7 @@ const Footer = () => {
             </p>
             <p>
               Email:{' '}
-              <a href="mailto:contact@kaviro.com" className="hover:underline text-zinc-900">contact@kaviro.com</a>
+              <a href="mailto:contact@keriyo.com" className="hover:underline text-zinc-900">contact@keriyo.com</a>
             </p>
             <p className="text-xs text-zinc-400">Dhaka, Bangladesh • Fast Delivery Across All 64 Districts</p>
           </div>
@@ -78,7 +78,7 @@ const Footer = () => {
       </div>
 
       <div className="pt-8 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-400">
-        <p>© 2026 KAVIRO. All rights reserved. Created &amp; Operated by Mahim Afridi.</p>
+        <p>© 2026 KERIYO. All rights reserved. Created &amp; Operated by Mahim Afridi.</p>
         <p className="flex items-center gap-2 font-medium text-zinc-500">
           <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
           <span>100% Authentic Tech &amp; Gadgets</span>

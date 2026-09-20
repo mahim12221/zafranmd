@@ -8,8 +8,8 @@ const NavBar = ({ token, setToken }) => {
   const [adminData, setAdminData] = useState(() => {
     const saved = localStorage.getItem('adminProfile');
     return saved ? JSON.parse(saved) : {
-      name: 'Kaviro Super Admin',
-      email: 'admin@kaviro.com',
+      name: 'Keriyo Super Admin',
+      email: 'admin@keriyo.com',
       title: 'Executive Store Manager',
       phone: '+880 1700-000000',
       profilePic: ''
@@ -91,7 +91,7 @@ const NavBar = ({ token, setToken }) => {
 
   return (
     <div className='flex items-center py-2.5 px-[4%] justify-between bg-white border-b border-gray-200 shadow-xs'>
-      <img className='w-[max(10%,80px)] object-contain' src={assets.logo} alt="Zafran Logo" />
+      <img className='w-32 sm:w-36 h-auto object-contain' src={assets.logo} alt="Keriyo Admin Logo" />
 
       <div className='flex items-center gap-3 sm:gap-5'>
         {/* Admin Profile Chip */}

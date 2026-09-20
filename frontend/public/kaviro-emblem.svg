@@ -1,55 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
   <defs>
-    <linearGradient id="shieldBg" x1="10" y1="10" x2="110" y2="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#181920" />
-      <stop offset="50%" stop-color="#0e0f14" />
-      <stop offset="100%" stop-color="#070709" />
+    <linearGradient id="emblemBg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
     </linearGradient>
-    <linearGradient id="kOrange" x1="30" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+    <linearGradient id="kOrange" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#ff7828" />
-      <stop offset="50%" stop-color="#f95700" />
-      <stop offset="100%" stop-color="#d93800" />
+      <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
-    <linearGradient id="kGold" x1="40" y1="20" x2="90" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffb74d" />
-      <stop offset="100%" stop-color="#ff7828" />
-    </linearGradient>
-    <linearGradient id="kSilver" x1="20" y1="20" x2="50" y2="100" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="50%" stop-color="#e2e8f0" />
-      <stop offset="100%" stop-color="#94a3b8" />
-    </linearGradient>
-    <linearGradient id="rimGlow" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ff7828" stop-opacity="0.6" />
-      <stop offset="40%" stop-color="#ffffff" stop-opacity="0.2" />
-      <stop offset="100%" stop-color="#ff5500" stop-opacity="0.4" />
-    </linearGradient>
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
   </defs>
 
-  <!-- Premium Squircle Container -->
-  <rect x="6" y="6" width="108" height="108" rx="30" fill="url(#shieldBg)" />
-  <rect x="6" y="6" width="108" height="108" rx="30" stroke="url(#rimGlow)" stroke-width="2.5" />
+  <!-- Dark luxury rounded squircle base -->
+  <rect x="5" y="5" width="110" height="110" rx="26" fill="url(#emblemBg)" stroke="#27272a" stroke-width="2" />
 
-  <!-- Subtle Tech Grid Accent -->
-  <circle cx="60" cy="60" r="44" stroke="#ffffff" stroke-opacity="0.05" stroke-dasharray="3 5" />
-  
-  <!-- The Iconic Geometric "K" Monogram -->
-  <!-- Left Pillar (Clean Tech Stem) -->
-  <rect x="32" y="30" width="12" height="60" rx="6" fill="url(#kSilver)" />
-  <rect x="35" y="34" width="4" height="16" rx="2" fill="#ffffff" opacity="0.6" />
+  <!-- Clean, Iconic Geometric K -->
+  <g transform="translate(32, 25)">
+    <!-- Vertical Bar: Clean, sleek rounded pill -->
+    <rect x="0" y="0" width="11" height="70" rx="5.5" fill="#ffffff" />
+    
+    <!-- Top Diagonal Wing: Precision angled blade -->
+    <path d="M22 35 L48 10 C50 8 54 9.5 54 12.5 L54 18 C54 20 53 22 51.5 23.5 L31 43 Z" fill="url(#kOrange)" />
 
-  <!-- Upper Diagonal Wing (Dynamic Arrow / Blade) -->
-  <path d="M48 57 L72 32 C74.5 29.5 78.5 29.5 81 32 L83 34 C85.5 36.5 85.5 40.5 83 43 L62 64 Z" fill="url(#kGold)" filter="url(#softGlow)" />
-  <path d="M52 57 L74 35 C75.5 33.5 78 33.5 79.5 35 L80 35.5 C81.5 37 81.5 39.5 80 41 L63 60 Z" fill="#fff" opacity="0.25" />
+    <!-- Bottom Diagonal Wing: Crisp parallel return -->
+    <path d="M22 35 L51.5 64.5 C53 66 54 68 54 70 L54 75.5 C54 78.5 50 80 48 78 L22 52 Z" fill="#ffffff" />
 
-  <!-- Lower Diagonal Wing (Power Stabilizer) -->
-  <path d="M50 63 L74 87 C76.5 89.5 80.5 89.5 83 87 L85 85 C87.5 82.5 87.5 78.5 85 76 L65 56 Z" fill="url(#kOrange)" />
-
-  <!-- Tech Diamond Node at Center Core -->
-  <polygon points="56,60 62,54 68,60 62,66" fill="#ffffff" filter="url(#softGlow)" />
-  <circle cx="62" cy="60" r="1.5" fill="#ff7828" />
+    <!-- Kinetic tech dot -->
+    <circle cx="27" cy="43.5" r="4.5" fill="url(#kOrange)" stroke="#09090b" stroke-width="2" />
+  </g>
 </svg>

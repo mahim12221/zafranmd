@@ -6,7 +6,7 @@ const Contact = () => {
   return (
     <div className="py-8">
       <div className="text-center mb-8">
-        <Title text1={'CONTACT'} text2={'KAVIRO'} />
+        <Title text1={'CONTACT'} text2={'KERIYO'} />
         <p className="text-xs sm:text-sm text-zinc-500 max-w-lg mx-auto mt-1">
           Have a question about gadgets, EDC gear, or your order? We're always here to assist.
         </p>
@@ -17,7 +17,7 @@ const Contact = () => {
           id="contact-tech-support-image"
           className="w-full md:max-w-[480px] rounded-2xl shadow-lg border border-zinc-200/80 object-cover"
           src={contactTechImg}
-          alt="Kaviro Concierge"
+          alt="Keriyo Concierge"
           referrerPolicy="no-referrer"
         />
         <div className="flex flex-col justify-center items-start gap-6 max-w-lg p-6 sm:p-8 bg-zinc-50 border border-zinc-200/80 rounded-3xl">
@@ -25,7 +25,7 @@ const Contact = () => {
             <span className="text-[10px] font-black uppercase tracking-widest text-orange-600 bg-orange-100/70 border border-orange-200 px-2.5 py-1 rounded-full">
               Direct Concierge
             </span>
-            <h3 className="font-extrabold text-2xl text-zinc-950 mt-2">Kaviro Customer Care</h3>
+            <h3 className="font-extrabold text-2xl text-zinc-950 mt-2">Keriyo Customer Care</h3>
           </div>
 
           <div className="text-xs sm:text-sm text-zinc-600 space-y-2">
@@ -38,7 +38,7 @@ const Contact = () => {
             </p>
             <p>
               <strong>Official Email:</strong>{' '}
-              <a href="mailto:contact@kaviro.com" className="text-zinc-950 hover:text-orange-600 underline">contact@kaviro.com</a>
+              <a href="mailto:contact@keriyo.com" className="text-zinc-950 hover:text-orange-600 underline">contact@keriyo.com</a>
             </p>
           </div>
 

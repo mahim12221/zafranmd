@@ -42,10 +42,10 @@ const NavBar = () => {
       {/* Logo */}
       <Link to='/' className="flex items-center">
         <img 
-          id="kaviro-main-header-logo" 
+          id="keriyo-main-header-logo" 
           src={assets.logo} 
           className="w-36 sm:w-44 h-auto object-contain hover:opacity-90 transition select-none" 
-          alt="Kaviro Gadgets & Gear" 
+          alt="Keriyo Gadgets & Gear" 
         />
       </Link>
 

@@ -90,10 +90,10 @@ const ChatWidget = () => {
           }
         }).catch(err => console.log(err));
     } else {
-      let guestId = localStorage.getItem('kaviro_guest_uid');
+      let guestId = localStorage.getItem('keriyo_guest_uid') || localStorage.getItem('kaviro_guest_uid');
       if (!guestId) {
         guestId = 'guest_' + Math.random().toString(36).substring(2, 11);
-        localStorage.setItem('kaviro_guest_uid', guestId);
+        localStorage.setItem('keriyo_guest_uid', guestId);
       }
       setEffectiveUserId(guestId);
     }
@@ -283,7 +283,7 @@ const ChatWidget = () => {
   if (location.pathname.startsWith('/admin')) return null;
 
   return (
-    <div id="kaviro-chat-widget-root" className="fixed bottom-5 right-5 z-50">
+    <div id="keriyo-chat-widget-root" className="fixed bottom-5 right-5 z-50">
       {/* 1. SELECTION MENU POPUP */}
       {viewMode === 'menu' && (
         <div className="bg-white border border-zinc-200/90 rounded-2xl sm:rounded-3xl shadow-2xl w-[310px] sm:w-[350px] overflow-hidden animate-fadeIn flex flex-col mb-2">
@@ -294,7 +294,7 @@ const ChatWidget = () => {
                 💬
               </div>
               <div>
-                <h3 className="font-bold text-sm text-white leading-tight">Kaviro Support &amp; AI</h3>
+                <h3 className="font-bold text-sm text-white leading-tight">Keriyo Support &amp; AI</h3>
                 <p className="text-[11px] text-zinc-400">How can we help you today?</p>
               </div>
             </div>
@@ -310,7 +310,7 @@ const ChatWidget = () => {
 
           {/* Menu Options */}
           <div className="p-3 sm:p-4 flex flex-col gap-2.5 bg-zinc-50/60">
-            {/* Option 1: Kaviro Customer Support */}
+            {/* Option 1: Keriyo Customer Support */}
             <button
               type="button"
               onClick={() => {
@@ -329,7 +329,7 @@ const ChatWidget = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1 mb-0.5">
                   <h4 className="font-bold text-xs sm:text-sm text-zinc-900 group-hover:text-black">
-                    Kaviro Customer Support
+                    Keriyo Customer Support
                   </h4>
                   {hasUnread && (
                     <span className="bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
@@ -347,19 +347,19 @@ const ChatWidget = () => {
               </div>
             </button>
 
-            {/* Option 2: Kaviro AI */}
+            {/* Option 2: Keriyo AI */}
             <button
               type="button"
               onClick={() => setViewMode('ai')}
               className="w-full text-left p-3.5 rounded-2xl bg-white border border-orange-200/90 hover:border-orange-400 hover:bg-orange-50/40 transition shadow-2xs group flex items-start gap-3.5 cursor-pointer relative"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-zinc-950 via-zinc-900 to-zinc-800 border border-orange-500/40 text-orange-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition shadow-xs p-1.5">
-                <img src="/kaviro-emblem.svg" alt="Kaviro AI" className="w-full h-full object-contain select-none" />
+                <img src="/keriyo-emblem.svg" alt="Keriyo AI" className="w-full h-full object-contain select-none" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1 mb-0.5">
                   <h4 className="font-bold text-xs sm:text-sm text-zinc-900 group-hover:text-orange-600 flex items-center gap-1.5">
-                    <span>Kaviro AI</span>
+                    <span>Keriyo AI</span>
                     <span className="bg-orange-500/15 text-orange-600 border border-orange-500/30 text-[9px] font-bold px-1.5 py-0.2 rounded uppercase">
                       AI
                     </span>
@@ -419,7 +419,7 @@ const ChatWidget = () => {
                 <h3 className="font-bold text-xs sm:text-sm text-white truncate leading-tight">
                   {userData?.name || 'Customer Support'}
                 </h3>
-                <p className="text-[10px] text-zinc-400 truncate">Kaviro Official Support</p>
+                <p className="text-[10px] text-zinc-400 truncate">Keriyo Official Support</p>
               </div>
             </div>
             <button 
@@ -572,7 +572,7 @@ const ChatWidget = () => {
             <div className="absolute bottom-full right-0 mb-4 mr-2 bg-white text-zinc-800 text-sm p-3.5 rounded-2xl rounded-br-none shadow-2xl border border-zinc-100 max-w-[220px] sm:max-w-[280px] animate-fadeIn whitespace-normal break-words z-50">
               <div className="flex items-center gap-2 mb-1.5 border-b border-zinc-100 pb-1.5">
                 <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs">💬</div>
-                <span className="font-bold text-[11px] text-zinc-900 uppercase tracking-wide">Kaviro Support</span>
+                <span className="font-bold text-[11px] text-zinc-900 uppercase tracking-wide">Keriyo Support</span>
               </div>
               <p className="line-clamp-3 text-zinc-600 leading-relaxed font-medium">"{lastUnreadMessage}"</p>
               <p className="text-[10px] text-zinc-400 mt-2 flex items-center gap-1">
@@ -589,7 +589,7 @@ const ChatWidget = () => {
               setLastUnreadMessage(null);
             }}
             className="bg-zinc-950 hover:bg-black text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition active:scale-95 cursor-pointer relative border border-zinc-800"
-            title="Chat with Kaviro"
+            title="Chat with Keriyo"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.522 1.522 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />

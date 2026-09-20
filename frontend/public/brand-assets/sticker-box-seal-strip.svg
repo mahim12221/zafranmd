@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 90" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="stripBg" x1="0" y1="0" x2="420" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="100%" stop-color="#18181b" />
+    </linearGradient>
+    <linearGradient id="stripOrange" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff7828" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+
+  <rect width="420" height="90" rx="8" fill="url(#stripBg)" stroke="#27272a" stroke-width="1.5"/>
+
+  <!-- Security Stitch Pattern Edges -->
+  <rect x="0" y="0" width="8" height="90" fill="url(#stripOrange)" rx="2"/>
+  <rect x="412" y="0" width="8" height="90" fill="url(#stripOrange)" rx="2"/>
+
+  <!-- Left Icon -->
+  <g transform="translate(24, 20)">
+    <rect width="50" height="50" rx="12" fill="#18181b" stroke="#3f3f46" stroke-width="1"/>
+    <g transform="translate(13, 10)">
+      <rect x="0" y="0" width="5" height="30" rx="2.5" fill="#ffffff"/>
+      <path d="M10 15 L21 4 C22 3 24 3.5 24 5 L24 8 C24 9 23.5 10 22.5 10.8 L13 19 Z" fill="#ff7828"/>
+      <path d="M10 15 L22.5 27.5 C23.5 28.5 24 29.5 24 30.5 L24 33.5 C24 35 22 35.8 21 34.8 L10 23.8 Z" fill="#ffffff"/>
+      <circle cx="12.5" cy="19" r="2.2" fill="#ff7828" stroke="#09090b" stroke-width="1"/>
+    </g>
+  </g>
+
+  <!-- Middle Warning & Brand Text -->
+  <g transform="translate(90, 24)">
+    <div xmlns="http://www.w3.org/1999/xhtml"></div>
+    <text x="0" y="19" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="18" font-weight="900" letter-spacing="3" fill="#ffffff">KERIYO</text>
+    <text x="85" y="19" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="10" font-weight="800" letter-spacing="2" fill="#ff7828">SECURITY SEAL</text>
+    <text x="0" y="38" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="600" letter-spacing="0.8" fill="#a1a1aa">DO NOT ACCEPT IF THIS TAMPER TAPE IS BROKEN OR DAMAGED</text>
+  </g>
+
+  <!-- Right Barcode / Serial Simulation -->
+  <g transform="translate(340, 25)">
+    <rect x="0" y="0" width="2" height="35" fill="#71717a"/>
+    <rect x="4" y="0" width="4" height="35" fill="#ffffff"/>
+    <rect x="11" y="0" width="1" height="35" fill="#71717a"/>
+    <rect x="15" y="0" width="3" height="35" fill="#ffffff"/>
+    <rect x="21" y="0" width="5" height="35" fill="#71717a"/>
+    <rect x="29" y="0" width="2" height="35" fill="#ffffff"/>
+    <rect x="34" y="0" width="4" height="35" fill="#71717a"/>
+    <text x="18" y="47" font-family="monospace" font-size="7" fill="#71717a" text-anchor="middle">KY-GENUINE</text>
+  </g>
+</svg>

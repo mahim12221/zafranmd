@@ -36,7 +36,7 @@
   <!-- Circular Curved Packaging Text -->
   <text fill="#ffffff" font-family="'Outfit', system-ui, sans-serif" font-size="20" font-weight="900" letter-spacing="6">
     <textPath href="#textCircleTop" startOffset="50%" text-anchor="middle">
-      ★ KAVIRO • SMART GADGETS ★
+      ★ KERIYO • SMART GADGETS ★
     </textPath>
   </text>
 

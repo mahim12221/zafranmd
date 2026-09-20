@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="kOrangeVert" x1="0" y1="0" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff7828" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="kVertBg" x1="0" y1="0" x2="360" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+  </defs>
+
+  <rect width="360" height="360" rx="36" fill="url(#kVertBg)"/>
+  <rect x="2" y="2" width="356" height="356" rx="34" stroke="#27272a" stroke-width="2"/>
+
+  <!-- Centered Emblem -->
+  <g transform="translate(124, 60)">
+    <rect width="112" height="112" rx="30" fill="#09090b" stroke="#3f3f46" stroke-width="2"/>
+    <g transform="translate(29, 21)">
+      <rect x="0" y="0" width="11" height="70" rx="5.5" fill="#ffffff"/>
+      <path d="M22 35 L48 10 C50 8 54 9.5 54 12.5 L54 18 C54 20 53 22 51.5 23.5 L31 43 Z" fill="url(#kOrangeVert)"/>
+      <path d="M22 35 L51.5 64.5 C53 66 54 68 54 70 L54 75.5 C54 78.5 50 80 48 78 L22 52 Z" fill="#ffffff"/>
+      <circle cx="27" cy="43.5" r="4.5" fill="url(#kOrangeVert)" stroke="#09090b" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Centered Typography -->
+  <g transform="translate(180, 230)" text-anchor="middle">
+    <text x="0" y="20" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="38" font-weight="900" letter-spacing="7" fill="#ffffff">KERIYO</text>
+    <circle cx="96" cy="12" r="4.5" fill="#ff7828"/>
+    <text x="0" y="48" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="4" fill="#a1a1aa">TACTILE &amp; SMART GADGETS</text>
+    <text x="0" y="70" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="9" font-weight="600" letter-spacing="2" fill="#ff7828">EST. 2026 • GENUINE QUALITY</text>
+  </g>
+</svg>

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import AdminChat from '../components/AdminChat';
+import BrandAssets from './BrandAssets';
 
 const AdminPortal = () => {
   const { backendUrl, currency, getProductsData, setDeliveryFee, fetchDeliverySettings, selectedChatUser, setSelectedChatUser } = useContext(ShopContext);
@@ -60,10 +61,10 @@ const AdminPortal = () => {
   // Dedicated Admin Profile & Identity State (completely separate from customer user state)
   const [adminProfile, setAdminProfile] = useState(() => {
     try {
-      const saved = localStorage.getItem('kaviro_admin_profile');
+      const saved = localStorage.getItem('keriyo_admin_profile') || localStorage.getItem('kaviro_admin_profile');
       return saved ? JSON.parse(saved) : {
-        name: 'Kaviro Super Admin',
-        email: 'admin@kaviro.com',
+        name: 'Keriyo Super Admin',
+        email: 'admin@keriyo.com',
         role: 'Super Administrator',
         title: 'Executive Store Manager',
         phone: '+880 1700-000000',
@@ -72,8 +73,8 @@ const AdminPortal = () => {
       };
     } catch {
       return {
-        name: 'Kaviro Super Admin',
-        email: 'admin@kaviro.com',
+        name: 'Keriyo Super Admin',
+        email: 'admin@keriyo.com',
         role: 'Super Administrator',
         title: 'Executive Store Manager',
         phone: '+880 1700-000000',
@@ -84,7 +85,7 @@ const AdminPortal = () => {
   });
 
   const [adminEditForm, setAdminEditForm] = useState({
-    name: 'Kaviro Super Admin',
+    name: 'Keriyo Super Admin',
     title: 'Executive Store Manager',
     phone: '+880 1700-000000'
   });
@@ -568,8 +569,9 @@ const AdminPortal = () => {
           
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-black tracking-widest text-white">KAVIRO</span>
+              <div className="flex items-center gap-2.5">
+                <img src="/keriyo-emblem.svg" alt="Keriyo" className="w-8 h-8 rounded-xl object-contain shadow-xs" />
+                <span className="text-xl font-black tracking-widest text-white">KERIYO</span>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-400/30">
                   ADMIN
                 </span>
@@ -588,7 +590,7 @@ const AdminPortal = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@kaviro.com"
+                placeholder="admin@keriyo.com"
                 required
                 className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 text-white rounded-xl focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 text-sm placeholder:text-slate-600 transition"
               />
@@ -618,7 +620,7 @@ const AdminPortal = () => {
               <span className="text-[10px] text-sky-400 font-mono">Development Helper</span>
             </div>
             <p className="font-mono text-slate-400 text-[11px] select-all cursor-pointer bg-slate-900/90 p-2 rounded-lg border border-slate-800">
-              Email: <span className="text-sky-300">admin@kaviro.com</span><br/>
+              Email: <span className="text-sky-300">admin@keriyo.com</span><br/>
               Password: <span className="text-sky-300">admin1234</span>
             </p>
           </div>
@@ -641,7 +643,7 @@ const AdminPortal = () => {
                 <span>{adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}</span>
               )}
             </div>
-            <span className="text-base sm:text-lg font-black tracking-widest text-white hidden xs:inline">KAVIRO</span>
+            <span className="text-base sm:text-lg font-black tracking-widest text-white hidden xs:inline">KERIYO</span>
             <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-400/30">
               ADMIN
             </span>
@@ -786,6 +788,17 @@ const AdminPortal = () => {
           >
             <span className="flex items-center gap-1.5">🛡️ Admin Profile</span>
             <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-sky-400/20 text-sky-300 border border-sky-400/30">Self</span>
+          </button>
+
+          {/* BRAND & PACKAGING KIT FOR ADMIN ONLY */}
+          <button
+            onClick={() => setActiveTab('brand_kit')}
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-between gap-2 whitespace-nowrap cursor-pointer ${
+              activeTab === 'brand_kit' ? 'bg-orange-500/20 text-orange-300 border border-orange-400/50 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">📦 Brand &amp; Packaging</span>
+            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">Kit</span>
           </button>
         </aside>
 
@@ -1892,14 +1905,14 @@ const AdminPortal = () => {
                   {/* Admin Details */}
                   <div className="flex-1 text-center sm:text-left space-y-1.5">
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                      <h3 className="text-2xl font-black text-white tracking-tight">{adminProfile.name || 'Kaviro Super Admin'}</h3>
+                      <h3 className="text-2xl font-black text-white tracking-tight">{adminProfile.name || 'Keriyo Super Admin'}</h3>
                       <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-400 text-slate-950">
                         {adminProfile.role || 'Super Admin'}
                       </span>
                     </div>
                     <p className="text-sm font-medium text-sky-300/90">{adminProfile.title || 'Executive Store Manager'}</p>
                     <p className="text-xs text-slate-400 flex items-center justify-center sm:justify-start gap-2">
-                      <span>📧 {adminProfile.email || 'admin@kaviro.com'}</span>
+                      <span>📧 {adminProfile.email || 'admin@keriyo.com'}</span>
                       <span>•</span>
                       <span>📞 {adminProfile.phone || '+880 1700-000000'}</span>
                     </p>
@@ -1934,7 +1947,7 @@ const AdminPortal = () => {
                       value={adminEditForm.name}
                       onChange={(e) => setAdminEditForm(prev => ({ ...prev, name: e.target.value }))}
                       required
-                      placeholder="e.g. Kaviro Super Admin"
+                      placeholder="e.g. Keriyo Super Admin"
                       className="w-full px-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
@@ -1975,7 +1988,7 @@ const AdminPortal = () => {
                     </label>
                     <input
                       type="email"
-                      value={adminProfile.email || 'admin@kaviro.com'}
+                      value={adminProfile.email || 'admin@keriyo.com'}
                       disabled
                       className="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed font-mono"
                     />
@@ -2068,6 +2081,46 @@ const AdminPortal = () => {
                   </p>
                 </div>
               </div>
+
+              {/* BRAND ASSETS & PACKAGING KIT SECTION UNDER ADMIN PROFILE */}
+              <div className="mt-8 p-5 sm:p-6 bg-gradient-to-br from-zinc-900 via-zinc-900 to-black text-white rounded-2xl border border-zinc-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold uppercase tracking-wider">
+                    Executive Brand Pack &amp; Printing Assets
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <span>📦 Brand Logos, Stickers &amp; Packaging Box Covers</span>
+                  </h4>
+                  <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
+                    Download 100% scalable vector SVGs for Keriyo packaging boxes, security tape seals, die-cut badges, and horizontal/vertical logos for printing presses and Figma.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('brand_kit')}
+                  className="shrink-0 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white text-xs font-bold rounded-xl transition shadow-md flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Open Brand &amp; Packaging Kit</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: BRAND & PACKAGING ASSETS (ADMIN ONLY) */}
+          {activeTab === 'brand_kit' && (
+            <div>
+              <div className="mb-4 flex items-center justify-between pb-3 border-b border-gray-200 flex-wrap gap-2">
+                <button
+                  onClick={() => setActiveTab('admin_profile')}
+                  className="text-xs text-gray-500 hover:text-black font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  ← Back to Admin Profile
+                </button>
+                <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200">
+                  Admin Internal Assets
+                </span>
+              </div>
+              <BrandAssets />
             </div>
           )}
 

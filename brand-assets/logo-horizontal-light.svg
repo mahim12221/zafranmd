@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="kOrangeLight" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff7828" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+  </defs>
+
+  <!-- Clean Minimalist Lockup -->
+  <g transform="translate(24, 17)">
+    <rect width="86" height="86" rx="24" fill="#09090b"/>
+    <g transform="translate(22, 17)">
+      <rect x="0" y="0" width="8.5" height="52" rx="4.25" fill="#ffffff"/>
+      <path d="M16 26 L36.5 6 C38.5 4 42.5 5.5 42.5 8.5 L42.5 13.5 C42.5 15.5 41.5 17 40 18.5 L23 33 Z" fill="url(#kOrangeLight)"/>
+      <path d="M16 26 L39.5 49.5 C41 51 42 53 42 55 L42 60 C42 63 38 64.5 36 62.5 L16 42.5 Z" fill="#ffffff"/>
+      <circle cx="21" cy="32.5" r="3.5" fill="url(#kOrangeLight)" stroke="#09090b" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- Typography on Light Background -->
+  <g transform="translate(132, 30)">
+    <text x="0" y="42" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="44" font-weight="900" letter-spacing="5" fill="#09090b">KERIYO</text>
+    <circle cx="216" cy="34" r="5" fill="#ff7828"/>
+    <text x="2" y="65" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="12.5" font-weight="700" letter-spacing="4.5" fill="#52525b">SMART GADGETS &amp; EDC GEAR</text>
+  </g>
+</svg>

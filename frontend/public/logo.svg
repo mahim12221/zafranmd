@@ -1,58 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 68" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none">
   <defs>
-    <linearGradient id="hKOrange" x1="10" y1="10" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ff7828" />
-      <stop offset="100%" stop-color="#ea580c" />
-    </linearGradient>
-    <linearGradient id="hKGold" x1="20" y1="10" x2="55" y2="40" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffb74d" />
-      <stop offset="100%" stop-color="#ff7828" />
-    </linearGradient>
-    <linearGradient id="hKSilver" x1="10" y1="10" x2="35" y2="60" gradientUnits="userSpaceOnUse">
+    <linearGradient id="hLogoBg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#18181b" />
       <stop offset="100%" stop-color="#09090b" />
     </linearGradient>
-    <linearGradient id="hShieldBg" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1c1d24" />
-      <stop offset="100%" stop-color="#090a0f" />
-    </linearGradient>
-    <linearGradient id="hGlow" x1="0" y1="0" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ff7828" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#ff7828" stop-opacity="0.1" />
+    <linearGradient id="hOrangeGrad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff7828" />
+      <stop offset="100%" stop-color="#ea580c" />
     </linearGradient>
   </defs>
 
-  <!-- Left Emblem Mark (Scaled for perfect lockup) -->
-  <g transform="translate(6, 6)">
-    <!-- Squircle Background -->
-    <rect x="0" y="0" width="56" height="56" rx="16" fill="url(#hShieldBg)" />
-    <rect x="0" y="0" width="56" height="56" rx="16" stroke="url(#hGlow)" stroke-width="1.8" />
+  <!-- Left Iconic Mark (48x48) -->
+  <g transform="translate(6, 8)">
+    <rect x="0" y="0" width="48" height="48" rx="13" fill="url(#hLogoBg)" stroke="#27272a" stroke-width="1.5" />
     
-    <!-- K Stem -->
-    <rect x="13" y="13" width="6.5" height="30" rx="3.25" fill="#f4f4f5" />
-    <rect x="14.5" y="15" width="2" height="9" rx="1" fill="#ffffff" opacity="0.8" />
+    <g transform="translate(13, 10)">
+      <!-- Vertical Stem -->
+      <rect x="0" y="0" width="4.8" height="28" rx="2.4" fill="#ffffff" />
+      
+      <!-- Top Wing -->
+      <path d="M9 14 L20.5 3.5 C21.5 2.5 23.5 3.2 23.5 4.6 L23.5 7.2 C23.5 8.1 23 9 22.3 9.7 L13 18 Z" fill="url(#hOrangeGrad)" />
 
-    <!-- K Upper Blade -->
-    <path d="M22 28.5 L34.5 15.5 C36 14 38.5 14 40 15.5 L40.8 16.3 C42.3 17.8 42.3 20.3 40.8 21.8 L30 32.5 Z" fill="url(#hKGold)" />
+      <!-- Bottom Wing -->
+      <path d="M9 14 L22.3 26.3 C23 27 23.5 27.9 23.5 28.8 L23.5 31.4 C23.5 32.8 21.5 33.5 20.5 32.5 L9 21 Z" fill="#ffffff" />
 
-    <!-- K Lower Blade -->
-    <path d="M23 31.5 L35 43.5 C36.5 45 39 45 40.5 43.5 L41.2 42.8 C42.7 41.3 42.7 38.8 41.2 37.3 L31 27.5 Z" fill="url(#hKOrange)" />
-
-    <!-- Core Tech Diamond -->
-    <polygon points="26,30 29.5,26.5 33,30 29.5,33.5" fill="#ffffff" />
-    <circle cx="29.5" cy="30" r="1" fill="#ff7828" />
+      <!-- Dot Accent -->
+      <circle cx="11.5" cy="17.5" r="2" fill="url(#hOrangeGrad)" stroke="#09090b" stroke-width="1" />
+    </g>
   </g>
 
-  <!-- Brand Wordmark Typography: Custom high-precision vector letters -->
-  <g transform="translate(76, 12)">
-    <!-- KAVIRO Text in modern geometric styling -->
-    <text x="0" y="31" font-family="'Outfit', system-ui, -apple-system, sans-serif" font-size="31" font-weight="900" letter-spacing="4.5" fill="#09090b">KAVIRO</text>
+  <!-- Wordmark Section -->
+  <g transform="translate(68, 12)">
+    <!-- Bold, Clean Brand Name -->
+    <text x="0" y="27" font-family="'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="900" letter-spacing="3.8" fill="#09090b">KERIYO</text>
     
-    <!-- Radiant Accent Dot on letter O or end -->
-    <circle cx="204" cy="27.5" r="4.5" fill="#ff7828" />
-    <circle cx="204" cy="27.5" r="2" fill="#ffffff" />
+    <!-- Radiant Orange Pulse Dot -->
+    <circle cx="136" cy="22" r="3.5" fill="#ff7828" />
 
-    <!-- Subtitle / Category Descriptor -->
-    <text x="1.5" y="45" font-family="'Outfit', system-ui, -apple-system, sans-serif" font-size="9" font-weight="700" letter-spacing="3.2" fill="#71717a">SMART GADGETS &amp; GEAR</text>
+    <!-- Subtitle -->
+    <text x="1" y="41" font-family="'Plus Jakarta Sans', 'Outfit', -apple-system, sans-serif" font-size="8.5" font-weight="700" letter-spacing="3" fill="#71717a">SMART GADGETS &amp; GEAR</text>
   </g>
 </svg>
