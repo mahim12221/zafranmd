@@ -23,6 +23,7 @@ const productSchema = new mongoose.Schema({
     date: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     salesCount: { type: Number, default: 0 },
+    categoryPath: { type: Array, default: [] }, // Array of selected menu path levels e.g. ["Phone Case", "iPhone", "iPhone 17"]
     reviews: [reviewSchema]
 })
 

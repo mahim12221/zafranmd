@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
@@ -6,7 +7,11 @@ import ProductItem from '../components/ProductItem';
 
 
 const Collection = () => {
-  const {products, search, showSearch} = useContext(ShopContext);
+  const {products, search, showSearch, categories} = useContext(ShopContext);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlCategory = searchParams.get('category');
+  const urlFilter = searchParams.get('filter');
+
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
   const [category, setCategory] = useState([]);
@@ -33,6 +38,21 @@ const Collection = () => {
 
   const applyFilter = () => {
     let productsCopy = products.slice();
+
+    // URL Category Filter (from top multi-level navbar)
+    if (urlCategory && urlCategory.trim() !== '') {
+      const target = urlCategory.trim().toLowerCase();
+      productsCopy = productsCopy.filter(item => {
+        const inCat = item.category && item.category.toLowerCase() === target;
+        const inSub = (item.subCategory || item.subcategory) && (item.subCategory || item.subcategory).toLowerCase() === target;
+        const inPath = Array.isArray(item.categoryPath) && item.categoryPath.some(cp => 
+          cp && (cp.toLowerCase() === target || cp.toLowerCase().includes(target))
+        );
+        const inName = item.name && item.name.toLowerCase().includes(target);
+        return inCat || inSub || inPath || inName;
+      });
+    }
+
     if(search && search.trim() !== ''){
       const query = search.trim().toLowerCase();
       productsCopy = productsCopy.filter(item => 
@@ -67,7 +87,7 @@ const Collection = () => {
   }
   useEffect(()=>{
     applyFilter();
-  }, [category, subCategory, search, showSearch, products])
+  }, [category, subCategory, search, showSearch, products, urlCategory])
   useEffect(()=>{
     sortProduct();
   }, [sortType])
@@ -211,6 +231,26 @@ const Collection = () => {
             </div>
           </div>
         </div>
+
+        {/* Active URL Category / Path Filter Bar */}
+        {(urlCategory || urlFilter) && (
+          <div className="mb-6 p-3 bg-orange-50/80 border border-orange-200/90 rounded-2xl flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-orange-950 font-medium">
+              <span className="text-orange-600 font-bold">Category:</span>
+              <span className="bg-white px-2.5 py-1 rounded-lg border border-orange-200/80 font-bold text-gray-900 shadow-2xs">
+                {urlFilter || urlCategory}
+              </span>
+              <span className="text-zinc-500 text-[11px]">({filterProducts.length} items found)</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              className="text-xs text-orange-700 hover:text-red-600 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+            >
+              <span>✕ Clear Category Filter</span>
+            </button>
+          </div>
+        )}
 
         {/* Map Products */}
         {filterProducts.length === 0 ? (

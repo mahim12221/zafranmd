@@ -8,6 +8,7 @@ import productRouter from './routes/productRoute.js'
 import cartRouter from './routes/cartRoute.js'
 import orderRouter from './routes/orderRoute.js'
 import chatRouter from './routes/chatRoute.js'
+import categoryRouter from './routes/categoryRoute.js'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 
@@ -156,6 +157,7 @@ app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/category', categoryRouter);
 
 app.get('/', (req, res) => {
     res.send("API working")

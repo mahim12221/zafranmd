@@ -5,9 +5,11 @@ import { Link } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import AdminChat from '../components/AdminChat';
 import BrandAssets from './BrandAssets';
+import CategoryManager from './CategoryManager';
+import CategoryCascader from '../components/CategoryCascader';
 
 const AdminPortal = () => {
-  const { backendUrl, currency, getProductsData, setDeliveryFee, fetchDeliverySettings, selectedChatUser, setSelectedChatUser } = useContext(ShopContext);
+  const { backendUrl, currency, getProductsData, setDeliveryFee, fetchDeliverySettings, selectedChatUser, setSelectedChatUser, categories, fetchCategories } = useContext(ShopContext);
   const [adminToken, setAdminToken] = useState(localStorage.getItem('adminToken') || '');
   const [activeTab, setActiveTab] = useState('list'); // 'add', 'list', 'orders', 'settings'
 
@@ -22,6 +24,7 @@ const AdminPortal = () => {
   const [discount, setDiscount] = useState('0');
   const [category, setCategory] = useState('Electronics');
   const [subCategory, setSubCategory] = useState('Smartphones');
+  const [categoryPath, setCategoryPath] = useState([]);
   const [bestseller, setBestseller] = useState(false);
   const [sizes, setSizes] = useState([]);
   const [imageFiles, setImageFiles] = useState([null, null, null, null]);
@@ -527,6 +530,7 @@ const AdminPortal = () => {
       formData.append('discount', discount);
       formData.append('category', category);
       formData.append('subCategory', subCategory);
+      formData.append('categoryPath', JSON.stringify(categoryPath));
       formData.append('bestseller', bestseller);
       formData.append('sizes', JSON.stringify(['Standard']));
       formData.append('colors', JSON.stringify(selectedColors));
@@ -546,6 +550,7 @@ const AdminPortal = () => {
         setDescription('');
         setPrice('');
         setDiscount('0');
+        setCategoryPath([]);
         setSizes([]);
         setSelectedColors([]);
         setImageFiles([null, null, null, null]);
@@ -759,6 +764,15 @@ const AdminPortal = () => {
             }`}
           >
             🚚 Delivery Rates
+          </button>
+
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`shrink-0 md:shrink sm:flex-initial text-left px-3.5 py-2 sm:py-2.5 rounded-xl font-medium text-xs md:text-sm transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'categories' ? 'bg-sky-400/15 text-sky-200 border border-sky-400/40 font-bold backdrop-blur-xs shadow-xs' : 'text-slate-300 hover:bg-slate-800/70 hover:text-white border border-transparent'
+            }`}
+          >
+            🗂️ Menu Categories
           </button>
 
           <button
@@ -1121,6 +1135,19 @@ const AdminPortal = () => {
                   rows={3}
                   required
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-black focus:bg-white focus:ring-2 focus:ring-black/5 transition"
+                />
+              </div>
+
+              {/* Dynamic Menu Cascading Category Selector */}
+              <div className="p-4 bg-slate-900/5 rounded-2xl border border-slate-200/80 mb-4">
+                <CategoryCascader 
+                  categories={categories} 
+                  value={categoryPath} 
+                  onChange={({ path, category: cat, subCategory: subCat }) => {
+                    setCategoryPath(path);
+                    if (cat) setCategory(cat);
+                    if (subCat) setSubCategory(subCat);
+                  }} 
                 />
               </div>
 
@@ -2121,6 +2148,13 @@ const AdminPortal = () => {
                 </span>
               </div>
               <BrandAssets />
+            </div>
+          )}
+
+          {/* TAB: CATEGORY & NAVBAR MANAGER */}
+          {activeTab === 'categories' && (
+            <div>
+              <CategoryManager backendUrl={backendUrl} adminToken={adminToken} onUpdated={fetchCategories} />
             </div>
           )}
 

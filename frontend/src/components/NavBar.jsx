@@ -2,13 +2,14 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { assets } from '../assets/assets';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
+import CategoryNavMenu from './CategoryNavMenu';
 
 const NavBar = () => {
     const [visible, setVisible] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const profileMenuRef = useRef(null);
     const location = useLocation();
-    const { setShowSearch, getCartCount, navigate, token, setToken, clearCart, userData } = useContext(ShopContext);
+    const { setShowSearch, getCartCount, navigate, token, setToken, clearCart, userData, categories } = useContext(ShopContext);
 
     const logout = () => {
       setShowProfileMenu(false);
@@ -38,7 +39,8 @@ const NavBar = () => {
     };
 
   return (
-    <div className="flex items-center justify-between py-5 font-medium">
+    <>
+      <div className="flex items-center justify-between py-5 font-medium">
       {/* Logo */}
       <Link to='/' className="flex items-center">
         <img 
@@ -195,9 +197,32 @@ const NavBar = () => {
             <NavLink onClick={()=>setVisible(false)} className={({isActive}) => `py-3 px-4 rounded-xl transition ${isActive ? 'bg-zinc-950 text-white' : 'hover:bg-gray-100'}`} to="/about">ABOUT</NavLink>
             <NavLink onClick={()=>setVisible(false)} className={({isActive}) => `py-3 px-4 rounded-xl transition ${isActive ? 'bg-zinc-950 text-white' : 'hover:bg-gray-100'}`} to="/contact">CONTACT</NavLink>
           </div>
+
+          {categories && categories.length > 0 && (
+            <div className="px-3 pt-3 border-t border-gray-100 mt-2 overflow-y-auto">
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400 mb-2">Categories</p>
+              <div className="flex flex-col gap-1">
+                {categories.filter(c => !c.parentId || c.level === 1).map((cat) => (
+                  <button
+                    key={cat._id}
+                    onClick={() => {
+                      setVisible(false);
+                      navigate(`/collection?category=${encodeURIComponent(cat.name)}`);
+                    }}
+                    className="text-left py-2 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-100 rounded-lg flex items-center justify-between cursor-pointer"
+                  >
+                    <span>{cat.name}</span>
+                    <span className="text-gray-400">›</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+      </div>
+      <CategoryNavMenu />
+    </>
   );
 };
 

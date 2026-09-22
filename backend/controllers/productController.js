@@ -16,7 +16,7 @@ let mockProducts = [];
 // function for add product
 const addProduct = async (req, res) => {
     try {
-        const { name, description, price, category, subCategory, sizes, bestseller, discount, colors, images: bodyImages } = req.body;
+        const { name, description, price, category, subCategory, sizes, bestseller, discount, colors, images: bodyImages, categoryPath } = req.body;
 
         let imagesUrl = [];
         if (req.files && Object.keys(req.files).length > 0) {
@@ -82,6 +82,13 @@ const addProduct = async (req, res) => {
                 : (Array.isArray(colors) ? colors : []);
         }
 
+        let parsedCategoryPath = [];
+        try {
+            parsedCategoryPath = typeof categoryPath === 'string' ? JSON.parse(categoryPath) : (Array.isArray(categoryPath) ? categoryPath : [category, subCategory].filter(Boolean));
+        } catch {
+            parsedCategoryPath = [category, subCategory].filter(Boolean);
+        }
+
         // ✅ Create product data object
         const productData = {
             name,
@@ -94,6 +101,7 @@ const addProduct = async (req, res) => {
             bestseller: bestseller === "true" || bestseller === true,
             discount: Number(discount) || 0,
             salesCount: 0,
+            categoryPath: parsedCategoryPath,
             image: imagesUrl,
             images: imagesUrl,
             date: Date.now(),

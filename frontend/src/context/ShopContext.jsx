@@ -27,6 +27,7 @@ const ShopContextProvider = (props) => {
         }
     });
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [token, setToken] = useState(() => localStorage.getItem('token') || '');
     const [userData, setUserData] = useState(null);
     const [selectedChatUser, setSelectedChatUser] = useState(null);
@@ -68,6 +69,17 @@ const ShopContextProvider = (props) => {
             }
         } catch (err) {
             console.log('Using local delivery settings');
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get(`${backendUrl || ''}/api/category/list`);
+            if (response.data.success && Array.isArray(response.data.categories)) {
+                setCategories(response.data.categories);
+            }
+        } catch (err) {
+            console.log('Using local categories or error fetching:', err.message);
         }
     };
 
@@ -235,6 +247,7 @@ const ShopContextProvider = (props) => {
     useEffect(()=>{
         getProductsData();
         fetchDeliverySettings();
+        fetchCategories();
         if (token) {
             fetchUserProfile(token);
         } else {
@@ -260,6 +273,7 @@ const ShopContextProvider = (props) => {
         navigate, backendUrl, token, setToken, getUserCart,
         userData, setUserData, fetchUserProfile,
         selectedChatUser, setSelectedChatUser,
+        categories, setCategories, fetchCategories,
         setProducts
     } 
     return ( 
