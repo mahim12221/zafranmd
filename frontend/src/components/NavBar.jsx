@@ -132,9 +132,9 @@ const NavBar = () => {
           </button>
 
           {token && showProfileMenu && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl z-50 overflow-hidden animate-fadeIn">
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 shadow-2xl rounded-2xl z-50 overflow-hidden animate-scaleIn origin-top-right">
               {userData && (
-                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/70">
                   <p className="text-xs font-bold text-gray-900 truncate">{userData.name || 'My Account'}</p>
                   <p className="text-[11px] text-gray-500 truncate">{userData.email}</p>
                 </div>
@@ -142,7 +142,7 @@ const NavBar = () => {
               <div className="py-1">
                 <button
                   onClick={() => { setShowProfileMenu(false); navigate('/profile'); }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition"
+                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition cursor-pointer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -151,7 +151,7 @@ const NavBar = () => {
                 </button>
                 <button
                   onClick={() => { setShowProfileMenu(false); navigate('/orders'); }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition"
+                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-2 transition cursor-pointer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-500">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
@@ -160,7 +160,7 @@ const NavBar = () => {
                 </button>
                 <button
                   onClick={logout}
-                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition border-t border-gray-100"
+                  className="w-full text-left px-4 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition border-t border-gray-100 cursor-pointer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-red-500">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
@@ -172,13 +172,13 @@ const NavBar = () => {
           )}
         </div>
 
-        <Link to="/cart" className="relative">
+        <Link to="/cart" className="relative transition-transform duration-200 active:scale-90 hover:scale-105">
           <img src={assets.cart_icon} className="w-5 min-w-5" alt="Cart" />
-          <p className="absolute right-[-5px] bottom-[-5px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]">
+          <p className="absolute right-[-5px] bottom-[-5px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px] font-bold shadow-xs transition-transform duration-300">
             {getCartCount()}
           </p>
         </Link>
-        <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-5 cursor-pointer sm:hidden' alt="" />
+        <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-5 cursor-pointer sm:hidden transition-transform duration-200 active:scale-90 hover:opacity-80' alt="" />
       </div>
       {/* Mobile Drawer */}
       <div className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-50 transition-opacity duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>

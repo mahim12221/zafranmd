@@ -234,7 +234,7 @@ const Collection = () => {
 
         {/* Active URL Category / Path Filter Bar */}
         {(urlCategory || urlFilter) && (
-          <div className="mb-6 p-3 bg-orange-50/80 border border-orange-200/90 rounded-2xl flex items-center justify-between gap-2 flex-wrap">
+          <div className="mb-6 p-3 bg-orange-50/80 border border-orange-200/90 rounded-2xl flex items-center justify-between gap-2 flex-wrap animate-fadeIn">
             <div className="flex items-center gap-2 text-xs text-orange-950 font-medium">
               <span className="text-orange-600 font-bold">Category:</span>
               <span className="bg-white px-2.5 py-1 rounded-lg border border-orange-200/80 font-bold text-gray-900 shadow-2xs">
@@ -245,7 +245,7 @@ const Collection = () => {
             <button
               type="button"
               onClick={() => setSearchParams({})}
-              className="text-xs text-orange-700 hover:text-red-600 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+              className="text-xs text-orange-700 hover:text-red-600 font-bold flex items-center gap-1 hover:underline cursor-pointer transition active:scale-95"
             >
               <span>✕ Clear Category Filter</span>
             </button>
@@ -254,7 +254,7 @@ const Collection = () => {
 
         {/* Map Products */}
         {filterProducts.length === 0 ? (
-          <div className='py-20 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 p-8'>
+          <div className='py-20 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 p-8 animate-fadeIn'>
             <div className='w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3 text-gray-400'>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -264,13 +264,13 @@ const Collection = () => {
             <p className='text-xs mt-1 text-gray-400 max-w-sm mx-auto'>We couldn't find any products matching your active filters. Try clearing your search term or filter tags.</p>
             <button
               onClick={() => { setCategory([]); setSubCategory([]); }}
-              className='mt-4 text-xs font-semibold bg-black text-white px-4 py-2 rounded-xl hover:bg-neutral-800 transition'
+              className='mt-4 text-xs font-semibold bg-black text-white px-4 py-2 rounded-xl hover:bg-neutral-800 transition active:scale-95 cursor-pointer'
             >
               Clear All Filters
             </button>
           </div>
         ) : (
-          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 gap-y-6'>
+          <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 gap-y-6 animate-fadeIn'>
             {filterProducts.map((item, index)=>(
               <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.images || item.image} discount={item.discount} outOfStock={item.outOfStock} salesCount={item.salesCount} />
             ))}

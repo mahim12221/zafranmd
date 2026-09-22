@@ -22,7 +22,7 @@ const LatestCollection = () => {
       
       {/* Product Grid - Clean Symmetric Grid Layout */}
       {latestProducts.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5 gap-y-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5 gap-y-6 animate-fadeSlideUp">
           {latestProducts.map((item, index) => (
             <ProductItem key={index} id={item._id} image={item.images || item.image} name={item.name} price={item.price} discount={item.discount} outOfStock={item.outOfStock} salesCount={item.salesCount} />
           ))}

@@ -14,16 +14,16 @@ const ProductItem = ({ id, image, name, price, discount, outOfStock, salesCount 
 
   return (
     <Link 
-      className="group flex flex-col cursor-pointer select-none w-full text-zinc-700" 
+      className="group flex flex-col cursor-pointer select-none w-full text-zinc-700 transition-all duration-300 ease-out hover:-translate-y-1" 
       to={id ? `/product/${id}` : '#'}
       onClick={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
     >
       {/* Product Image Frame - Clean Aspect Square with Full Uncropped Image */}
       <div 
-        className="relative overflow-hidden rounded-2xl bg-zinc-50 border border-zinc-200/80 shadow-2xs group-hover:shadow-md group-hover:border-zinc-300 transition-all duration-300 w-full aspect-square flex items-center justify-center p-2 sm:p-3"
+        className="relative overflow-hidden rounded-2xl bg-zinc-50 border border-zinc-200/80 shadow-2xs group-hover:shadow-lg group-hover:border-zinc-300 transition-all duration-500 ease-out w-full aspect-square flex items-center justify-center p-2 sm:p-3"
       >
         <img 
-          className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ease-out ${outOfStock ? 'opacity-50 grayscale' : ''}`} 
+          className={`w-full h-full object-contain group-hover:scale-106 transition-transform duration-500 ease-out ${outOfStock ? 'opacity-50 grayscale' : ''}`} 
           src={productImage} 
           alt={name || "Keriyo Product"} 
           loading="lazy"
